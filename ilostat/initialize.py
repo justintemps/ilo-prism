@@ -11,14 +11,14 @@ def init_db():
     cur = con.cursor()
 
     # Drop the tables if they exists
-    cur.execute("DROP TABLE IF EXISTS areas")
+    cur.execute("DROP TABLE IF EXISTS cl_areas")
     cur.execute("DROP TABLE IF EXISTS dataflows")
 
     # Create the table with the list of ilostat areas
-    cur.execute("CREATE TABLE IF NOT EXISTS areas(area, name)")
+    cur.execute("CREATE TABLE IF NOT EXISTS cl_areas(cl_area, name)")
 
     # Create the table
-    cur.execute("CREATE TABLE IF NOT EXISTS dataflows(area, dataflow)")
+    cur.execute("CREATE TABLE IF NOT EXISTS dataflows(cl_area, dataflow)")
 
     # Commit the transaction
     con.commit()
