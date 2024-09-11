@@ -63,7 +63,6 @@ def seed_db():
         dataflows_processed += 1
 
         # Print an update message
-        print(f"Finished processing dataflow {dataflow_id}")
         print(f"Processed {dataflows_processed} of {
               len(dataflows_ids)} dataflows")
 
