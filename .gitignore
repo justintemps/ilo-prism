@@ -1,2 +1,4 @@
 *.db
 .python-version
+.env
+__pycache__
