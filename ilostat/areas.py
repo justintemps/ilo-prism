@@ -7,9 +7,7 @@ def get_cl_areas():
     together with their names.'''
 
     # Connect to the database
-    con = sqlite3.connect("ilo-prism-cache.db")
-
-    # Create a cursor
+    con = sqlite3.connect("store/ilo-prism.db")
     cur = con.cursor()
 
     # Create an SDMX Client client
@@ -22,10 +20,20 @@ def get_cl_areas():
     codelist_items = codelist_msg.codelist.CL_AREA.items
 
     # For each item in the codelist,
-    for key in codelist_items:
+
+    for item in codelist_items:
+        name_en = codelist_items[item].name["en"]
+        name_fr = codelist_items[item].name["fr"]
+        name_es = codelist_items[item].name["es"]
+
         cur.execute(
-            "INSERT INTO cl_areas(cl_area, name) VALUES(?, ?)", (key, codelist_items[key].name["en"]))
+            "INSERT INTO cl_area(code, name_en, name_fr, name_es) VALUES(?, ?, ?, ?)",
+            (item, name_en, name_fr, name_es))
         con.commit()
 
     # Close the cursor
     con.close()
+
+
+if __name__ == '__main__':
+    get_cl_areas()

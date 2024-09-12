@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS area_dataflow CASCADE;
-DROP TABLE IF EXISTS dataflow CASCADE;
-DROP TABLE IF EXISTS cl_area CASCADE;
+DROP TABLE IF EXISTS area_dataflow;
+DROP TABLE IF EXISTS dataflow;
+DROP TABLE IF EXISTS cl_area;
 
 -- An area from the ILOSTAT codelist CL_AREA. Usually a country or region
 CREATE TABLE cl_area (
@@ -8,14 +8,16 @@ CREATE TABLE cl_area (
   code TEXT NOT NULL UNIQUE,
   name_en TEXT NOT NULL,
   name_fr TEXT NOT NULL,
-  name_es TEXT NOT NULL,
+  name_es TEXT NOT NULL
 );
 
 -- A dataflow in ILOSTAT
 CREATE TABLE dataflow (
   dataflow_uid INTEGER PRIMARY KEY,
   code TEXT NOT NULL UNIQUE,
-  name TEXT NOT NULL,
+  name_en TEXT NOT NULL,
+  name_fr TEXT NOT NULL,
+  name_es TEXT NOT NULL,
   description TEXT
 );
 
@@ -25,7 +27,7 @@ CREATE TABLE cl_area_dataflow (
   cl_area_uid INTEGER NOT NULL,
   dataflow_uid INTEGER NOT NULL,
   FOREIGN KEY (cl_area_uid) REFERENCES cl_area(cl_area_uid),
-  FOREIGN KEY (dataflow_uid) REFERENCES dataflow(dataflow_uid),
+  FOREIGN KEY (dataflow_uid) REFERENCES dataflow(dataflow_uid)
 );
 
 

@@ -12,15 +12,6 @@ class Dataflows:
         self.dataflows_processed = 0
         self.__get_dataflows()
 
-    def __init_db(self):
-
-        # Drop the tables if they exists
-        self.cur.execute("DROP TABLE IF EXISTS dataflows")
-
-        # Create the table
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS dataflows(cl_area, dataflow)")
-
     def __get_dataflows(self):
         '''Seeds the database with a list of countries for each dataflow'''
         # Connect to the database

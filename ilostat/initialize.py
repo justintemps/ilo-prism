@@ -3,22 +3,13 @@ import sqlite3
 
 def init_db():
     '''Initialize the database'''
-
-    # Connect to the database
-    con = sqlite3.connect("ilo-prism-cache.db")
-
-    # Create a cursor
+    con = sqlite3.connect("store/ilo-prism.db")
     cur = con.cursor()
 
-    # Drop the tables if they exists
-    cur.execute("DROP TABLE IF EXISTS cl_areas")
-    cur.execute("DROP TABLE IF EXISTS dataflows")
-
-    # Create the table with the list of ilostat areas
-    cur.execute("CREATE TABLE IF NOT EXISTS cl_areas(cl_area, name)")
-
-    # Create the table
-    cur.execute("CREATE TABLE IF NOT EXISTS dataflows(cl_area, dataflow)")
+    # Initialize the tables from the schema
+    with open("store/schema.sql", "r") as f:
+        schema = f.read()
+        cur.executescript(schema)
 
     # Commit the transaction
     con.commit()
@@ -27,3 +18,7 @@ def init_db():
     con.close()
 
     print("Database initialized")
+
+
+if __name__ == "__main__":
+    init_db()
