@@ -9,6 +9,12 @@ def get_dataflows():
     con = sqlite3.connect("store/ilo-prism.db")
     cur = con.cursor()
 
+    # Get a list of languages and their ids
+    # {'en': 1, 'fr': 2, 'es': 3}
+    cur.execute("SELECT * FROM language")
+    languages = cur.fetchall()
+    languages = {lang[1]: lang[0] for lang in languages}
+
     # Create an SDMX Client client
     ilostat = sdmx.Client("ILO")
 
@@ -18,14 +24,30 @@ def get_dataflows():
     # Get the dataflows
     dataflows = dataflows_msg.dataflow
 
-    print(
-        dataflows_msg.dataflow.DF_WBL_3WBL_SEX_WBL_RT.description.localizations["en"])
-
-    # For each dataflow
     for dataflow in dataflows:
-        name_en = dataflows[dataflow].name.localizations["en"]
-        name_fr = dataflows[dataflow].name.localizations["fr"]
-        name_es = dataflows[dataflow].name.localizations["es"]
+        cur.execute(
+            "INSERT OR IGNORE INTO dataflow(code) VALUES(?)", (dataflow,))
+        dataflow_uid = cur.lastrowid
+        con.commit()
+
+        # Get the localized names of the dataflow
+        names = dataflows[dataflow].name.localizations
+        for lang in names:
+            if lang in languages:
+                cur.execute('''
+                            INSERT OR IGNORE INTO dataflow_name (
+                                dataflow_uid, language_uid, name
+                            ) VALUES(?, ?, ?)''',
+                            (dataflow_uid, languages[lang], dataflows[dataflow].name.localizations[lang]))
+
+        descriptions = dataflows[dataflow].description.localizations
+        for lang in descriptions:
+            if lang in languages:
+                cur.execute('''
+                            INSERT OR IGNORE INTO dataflow_description (
+                                dataflow_uid, language_uid, description
+                            ) VALUES(?, ?, ?)''',
+                            (dataflow_uid, languages[lang], dataflows[dataflow].description.localizations[lang]))
 
 
 if __name__ == '__main__':

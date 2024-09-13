@@ -43,7 +43,7 @@ def get_cl_areas():
                             INSERT OR IGNORE INTO cl_area_name (
                                 cl_area_uid, language_uid, name
                             ) VALUES(?, ?, ?)''',
-                            (cl_area_uid, languages[lang], codelist_items[item].name[lang]))
+                            (cl_area_uid, languages[lang], codelist_items[item].name.localizations[lang]))
                 con.commit()
 
     # Close the cursor
