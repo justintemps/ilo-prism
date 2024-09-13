@@ -1,4 +1,7 @@
 import sqlite3
+from ilostat.area import get_cl_areas
+from ilostat.dataflow import get_dataflows
+from ilostat.area_dataflow import get_area_dataflows
 
 
 def init_db():
@@ -22,3 +25,6 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
+    get_cl_areas()
+    get_dataflows()
+    get_area_dataflows()

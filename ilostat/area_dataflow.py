@@ -1,73 +1,97 @@
 import sdmx
 import sqlite3
+import time
 
 
-class Dataflows:
-    def __init__(self):
-        self.con = sqlite3.connect("ilo-prism-cache.db")
-        self.cur = self.con.cursor()
-        self.ilostat = sdmx.Client("ILO")
-        self.dataflows_msg = self.ilostat.dataflow()
-        self.dataflows_ids = list(self.dataflows_msg.dataflow)
-        self.dataflows_processed = 0
-        self.__get_dataflows()
+def get_area_dataflows():
+    # Connect to the database
+    con = sqlite3.connect("store/ilo-prism.db")
+    cur = con.cursor()
 
-    def __get_dataflows(self):
-        '''Seeds the database with a list of countries for each dataflow'''
-        # Connect to the database
+    # Get a list of languages and their ids
+    # {'en': 1, 'fr': 2, 'es': 3}
+    cur.execute("SELECT * FROM language")
+    languages = cur.fetchall()
+    languages = {lang[1]: lang[0] for lang in languages}
 
-        # Get a list of all of the data flows
-        dataflows_msg = self.ilostat.dataflow()
+    # Create an SDMX Client client
+    ilostat = sdmx.Client("ILO")
 
-        # Get the dataflow ids
-        dataflows_ids = list(dataflows_msg.dataflow)
+    # Get a list of all of the data flows
+    dataflows_msg = ilostat.dataflow()
 
-        # Initialize the number of dataflows processed
-        dataflows_processed = 0
+    # Get the dataflows
+    dataflows = dataflows_msg.dataflow
 
-        # For each data flow
-        for dataflow_id in dataflows_ids:
+    # Initialize the number of dataflows processed
+    dataflows_processed = 0
 
-            # Get the data flow
-            dataflow = self.ilostat.dataflow(dataflow_id)
+    for df in dataflows:
+        # Get the uid of the dataflow from the db
+        cur.execute(
+            "SELECT dataflow_uid FROM dataflow WHERE dataflow.code = ?", (df,))
+        dataflow_uid = cur.fetchone()
+        dataflow_uid = dataflow_uid[0]
 
-            # Get the constraints
-            constraints = dataflow.constraint
+        # Get the dataflow
+        dataflow = None
 
-            # Get the constraint ids
-            constraint_ids = list(constraints)
+        # If the request fails, retry three more times
+        for i in range(4):
+            try:
+                dataflow = ilostat.dataflow(df)
+                break
+            except:
+                print(f"Retrying {df}...")
+                time.sleep(5)
+                continue
 
-            # For each constraint
-            for constraint_id in constraint_ids:
+        dataflow = ilostat.dataflow(df)
 
-                # Get the constraint
-                constraint = constraints[constraint_id]
+        # Get the constraints
+        constraints = dataflow.constraint
 
-                # Get the content region included in the constraints
-                cr = constraint.data_content_region[0]
+        for constraint in constraints:
 
-                # Get the members of the content region
-                members = cr.member
+            # Get the content region included in the constraints
+            cr = constraints[constraint].data_content_region[0]
 
-                # Get the first member
-                ref_area = members["REF_AREA"]
+            # Get the members of the content region
+            members = cr.member
 
-                # Get the values of the member
-                member_values = ref_area.values
+            # Get the first member
+            ref_area = members["REF_AREA"]
 
-                # For each value
-                for member_value in member_values:
-                    # Insert the dataflow into the database
-                    self.cur.execute(
-                        "INSERT INTO dataflows(region, dataflow) VALUES(?, ?)", (member_value.value, dataflow_id))
-                    self.con.commit()
+            # Get the values of the member
+            member_values = ref_area.values
 
-                print(f"Added {len(member_values)
-                               } constraints for {dataflow_id}")
+            # For each value
+            for member_value in member_values:
+                area_code = member_value.value
 
-            # Increment the number of dataflows processed
-            dataflows_processed += 1
+                # Insert the dataflow into the database
+                cur.execute(
+                    "SELECT cl_area_uid FROM cl_area WHERE cl_area.code = ?", (area_code,))
+                cl_area_uid = cur.fetchone()
+                # If the area exists in the database
+                if cl_area_uid:
+                    cl_area_uid = cl_area_uid[0]
 
-            # Print an update message
-            print(f"Processed {dataflows_processed} of {
-                len(dataflows_ids)} dataflows")
+                    cur.execute('''INSERT OR IGNORE INTO cl_area_dataflow (
+                                    dataflow_uid,
+                                    cl_area_uid)
+                                    VALUES(?, ?)''',
+                                (dataflow_uid, cl_area_uid))
+                    con.commit()
+                else:
+                    print(f"Error: {df} includes Area {
+                          area_code} but this is not in the database")
+
+        print(f"Added {len(member_values)} constraints for {df}")
+
+        # Increment the number of dataflows processed
+        dataflows_processed += 1
+
+
+if __name__ == '__main__':
+    get_area_dataflows()

@@ -48,6 +48,7 @@ def get_dataflows():
                                 dataflow_uid, language_uid, description
                             ) VALUES(?, ?, ?)''',
                             (dataflow_uid, languages[lang], dataflows[dataflow].description.localizations[lang]))
+    cur.close()
 
 
 if __name__ == '__main__':
