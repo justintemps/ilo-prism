@@ -107,6 +107,7 @@ def get_area_dataflows():
         bar.update()
 
     bar.finish()
+    cur.close()
 
 
 if __name__ == '__main__':
