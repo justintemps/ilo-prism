@@ -1,5 +1,10 @@
 import sdmx
 import sqlite3
+import progressbar
+
+# Widgets for the progress bar
+widgets = ["Downloading dataflows", " ", progressbar.SimpleProgress(
+), ' ', progressbar.Bar(), ' ', progressbar.AdaptiveETA()]
 
 
 def get_dataflows():
@@ -24,7 +29,14 @@ def get_dataflows():
     # Get the dataflows
     dataflows = dataflows_msg.dataflow
 
-    for dataflow in dataflows:
+    # Set up the progress bar
+    bar = progressbar.ProgressBar(
+        max_value=(len(dataflows)), widgets=widgets)
+
+    for i, (dataflow) in enumerate(dataflows):
+
+        bar.update(i + 1)
+
         cur.execute(
             "INSERT OR IGNORE INTO dataflow(code) VALUES(?)", (dataflow,))
         dataflow_uid = cur.lastrowid
@@ -48,6 +60,8 @@ def get_dataflows():
                                 dataflow_uid, language_uid, description
                             ) VALUES(?, ?, ?)''',
                             (dataflow_uid, languages[lang], dataflows[dataflow].description.localizations[lang]))
+
+    bar.finish()
     cur.close()
 
 

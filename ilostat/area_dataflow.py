@@ -1,6 +1,11 @@
 import sdmx
 import sqlite3
 import time
+import progressbar
+
+# Widgets for the progress bar
+progressbar_widgets = ["Mapping dataflows to areas", " ", progressbar.SimpleProgress(
+), ' ', progressbar.Bar(), ' ', progressbar.AdaptiveETA()]
 
 
 def get_area_dataflows():
@@ -23,10 +28,14 @@ def get_area_dataflows():
     # Get the dataflows
     dataflows = dataflows_msg.dataflow
 
-    # Initialize the number of dataflows processed
-    dataflows_processed = 0
+    # Set up the progress bar
+    bar = progressbar.ProgressBar(
+        max_value=(len(dataflows)), widgets=progressbar_widgets)
 
-    for df in dataflows:
+    for i, df in enumerate(dataflows):
+
+        bar.update(i + 1)
+
         # Get the uid of the dataflow from the db
         cur.execute(
             "SELECT dataflow_uid FROM dataflow WHERE dataflow.code = ?", (df,))
@@ -36,17 +45,25 @@ def get_area_dataflows():
         # Get the dataflow
         dataflow = None
 
-        # If the request fails, retry three more times
-        for i in range(4):
+        # Maximum number of retries
+        max_retries = 10
+
+        # Base sleep time in seconds
+        base_sleep_time = 5
+
+        # If the request fails, retry max_retries more times
+        for i in range(max_retries):
             try:
                 dataflow = ilostat.dataflow(df)
                 break
-            except:
-                print(f"Retrying {df}...")
-                time.sleep(5)
-                continue
-
-        dataflow = ilostat.dataflow(df)
+            except Exception as e:
+                if i < max_retries - 1:
+                    sleep_time = base_sleep_time * \
+                        (2 ** i)
+                    time.sleep(sleep_time)
+                else:
+                    print(f"Attempt {i + 1} failed. No more retries left.")
+                    raise e  # Re-raise the exception if the last attempt fails
 
         # Get the constraints
         constraints = dataflow.constraint
@@ -87,10 +104,9 @@ def get_area_dataflows():
                     print(f"Error: {df} includes Area {
                           area_code} but this is not in the database")
 
-        print(f"Added {len(member_values)} constraints for {df}")
+        bar.update()
 
-        # Increment the number of dataflows processed
-        dataflows_processed += 1
+    bar.finish()
 
 
 if __name__ == '__main__':

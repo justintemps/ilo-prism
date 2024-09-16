@@ -1,5 +1,11 @@
 import sdmx
 import sqlite3
+import progressbar
+
+
+# Widgets for the progress bar
+widgets = ["Downloading areas", " ", progressbar.SimpleProgress(
+), ' ', progressbar.Bar(), ' ', progressbar.AdaptiveETA()]
 
 
 def get_cl_areas():
@@ -25,8 +31,14 @@ def get_cl_areas():
     # Get the items
     codelist_items = codelist_msg.codelist.CL_AREA.items
 
+    # Set up the progress bar
+    bar = progressbar.ProgressBar(
+        max_value=(len(codelist_items)), widgets=widgets)
+
     # For each item in the codelist,
-    for item in codelist_items:
+    for i, item in enumerate(codelist_items):
+        bar.update(i + 1)
+
         # Insert the area into the database
         cur.execute("INSERT OR IGNORE INTO cl_area(code) VALUES(?)", (item,))
         cl_area_uid = cur.lastrowid
@@ -45,6 +57,9 @@ def get_cl_areas():
                             ) VALUES(?, ?, ?)''',
                             (cl_area_uid, languages[lang], codelist_items[item].name.localizations[lang]))
                 con.commit()
+
+    # Close the bar
+    bar.finish()
 
     # Close the cursor
     con.close()

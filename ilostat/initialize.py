@@ -6,6 +6,9 @@ from ilostat.area_dataflow import get_area_dataflows
 
 def init_db():
     '''Initialize the database'''
+
+    print("Initializing database")
+
     con = sqlite3.connect("store/ilo-prism.db")
     cur = con.cursor()
 
@@ -19,8 +22,6 @@ def init_db():
 
     # Close the cursor
     con.close()
-
-    print("Database initialized")
 
 
 if __name__ == "__main__":
