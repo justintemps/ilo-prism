@@ -23,7 +23,8 @@ class ILOStat:
             print("Refreshing metadata...")
             self.__init_metadata()
 
-        self.__con = sqlite3.connect("store/ilo-prism.db")
+        self.__con = sqlite3.connect(
+            "store/ilo-prism.db", check_same_thread=False)
         self.__cur = self.__con.cursor()  # Fixed: Use self.__con instead of self.con
 
     def __del__(self):
@@ -44,7 +45,7 @@ class ILOStat:
             self.__con.close()
             print("Database connection closed")
 
-    def get_areas(self):
+    def get_areas(self) -> list[tuple[str, str]]:
         self.__cur.execute('''
             SELECT  cn.name, ca.code
             FROM cl_area AS ca
@@ -65,6 +66,16 @@ class ILOStat:
             WHERE ca.code = ? AND l.code = ?
         ''', (country, self.language))
         return self.__cur.fetchall()
+
+    def get_dataflow_description(self, dataflow: str):
+        self.__cur.execute('''
+            SELECT dd.description
+            FROM dataflow AS d
+            JOIN dataflow_description AS dd ON d.dataflow_uid = dd.dataflow_uid
+            JOIN language AS l ON dd.language_uid = l.language_uid
+            WHERE d.code = ? AND l.code = ?
+        ''', (dataflow, self.language))
+        return self.__cur.fetchone()
 
 
 if __name__ == "__main__":
