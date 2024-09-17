@@ -46,7 +46,7 @@ class ILOStat:
 
     def get_areas(self):
         self.__cur.execute('''
-            SELECT ca.code, cn.name
+            SELECT  cn.name, ca.code
             FROM cl_area AS ca
             JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
             JOIN language AS l ON cn.language_uid = l.language_uid
@@ -56,7 +56,7 @@ class ILOStat:
 
     def get_dataflows(self, country: str):
         self.__cur.execute('''
-            SELECT d.code, dn.name
+            SELECT dn.name, d.code
             FROM cl_area AS ca
             JOIN cl_area_dataflow AS cad ON ca.cl_area_uid = cad.cl_area_uid
             JOIN dataflow AS d ON cad.dataflow_uid = d.dataflow_uid
