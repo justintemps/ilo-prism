@@ -79,7 +79,6 @@ class ILOStat:
         return self.__cur.fetchone()
 
     def get_dimensions(self, df: str):
-        print(df)
         return get_dimensions(df, self.language)
 
 

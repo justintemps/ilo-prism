@@ -5,42 +5,44 @@ def get_dimensions(df: str, lang: str):
     # Create an SDMX Client client
     ilostat = sdmx.Client("ILO")
 
-    # Get the response from ILOSTAT
-    ilostat_msg = ilostat.dataflow(df)
+    dataflow = ilostat.dataflow(df)
 
-    # Get the dataflow
-    dataflow = ilostat_msg.dataflow[df]
+    dsd = dataflow.dataflow[df].structure
 
-    # Get the dsd
-    dsd = dataflow.structure
-
-    # Get the dimensions
-    dims = dsd.dimensions.components
-
-    # Get rid of REF_AREA because we already know the country
-    dims = [dim for dim in dims if dim.id != 'REF_AREA']
+    # Get the constraints
+    constraints = dataflow.constraint
 
     # The eventual return value
     dimensions = []
 
-    for dim in dims:
-        # Initialize the dimension objct
-        dimension = {
-            "dimension": (),
-            "items": []
-        }
+    for constraint in constraints:
 
-        # Get the codelist
-        cl = dsd.dimensions.get(dim).local_representation.enumerated
+        # Get the content region included in the constraints
+        cr = constraints[constraint].data_content_region[0]
 
-        if cl:
-            dimension["dimension"] = (cl.id, cl.name.localizations[lang])
+        # Get the members of the content region
+        dims = cr.member
 
-            for item in cl.items:
-                items = (cl.items[item].name.localizations[lang], item)
-                dimension["items"].append(items)
+        # Get rid of REF_AREA because we already know the country
+        dims.pop("REF_AREA", None)
 
-            dimensions.append(dimension)
+        for dim in dims:
+
+            # Get the codelist for this dimension
+            cl = dim.local_representation.enumerated
+
+            if cl:
+                # Initialize the dimension objct
+                dimension = {
+                    "dimension": (cl.id, cl.name.localizations[lang]),
+                    "values": []
+                }
+
+                for value in dims[dim].values:
+                    values = (cl.items[value].name.localizations[lang], value)
+                    dimension["values"].append(values)
+
+                dimensions.append(dimension)
 
     return dimensions
 
