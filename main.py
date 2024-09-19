@@ -37,6 +37,13 @@ with gr.Blocks() as demo:
         # Once we select the dataflows, now we can show the description
         if df and len(df) != 0:
             description = ilostat.get_dataflow_description(df)
+            dimensions = ilostat.get_dimensions(df)
+
+            gr.Markdown("### Select dimensions")
+            for dimension in dimensions:
+                _, label = dimension["dimension"]
+                gr.Dropdown(label=label, choices=dimension["items"])
+
             gr.Markdown("### About this data")
             gr.HTML(description)
 

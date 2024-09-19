@@ -5,6 +5,7 @@ from ilostat._area import get_cl_areas
 from ilostat._area_dataflow import get_area_dataflows
 from ilostat._initialize import init_db
 from ilostat._validate_db import validate_db
+from ilostat._dimensions import get_dimensions
 
 
 class ILOStat:
@@ -76,6 +77,10 @@ class ILOStat:
             WHERE d.code = ? AND l.code = ?
         ''', (dataflow, self.language))
         return self.__cur.fetchone()
+
+    def get_dimensions(self, df: str):
+        print(df)
+        return get_dimensions(df, self.language)
 
 
 if __name__ == "__main__":
