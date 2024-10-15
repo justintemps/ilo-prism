@@ -16,6 +16,13 @@ with gr.Blocks() as demo:
     # Which dataflows to query
     query_dataflow = gr.State(None)
 
+    # DSD for the dataflow
+    query_dsd = gr.State(None)
+
+    # Update the query_dsd when the query_dataflow changes
+    query_dataflow.change(
+        lambda df: ilostat.get_dsd(df), query_dataflow, query_dsd)
+
     # Areas dropdown menu
     areas_dropdown = gr.Dropdown(
         choices=ilostat_areas, label="First select a geographic region")
@@ -39,12 +46,13 @@ with gr.Blocks() as demo:
             description = ilostat.get_dataflow_description(df)
             dimensions = ilostat.get_dimensions(df)
 
-            gr.Markdown("### Select dimensions")
+            gr.Markdown("## Select dimensions")
             for dimension in dimensions:
                 _, label = dimension["dimension"]
-                gr.Dropdown(label=label, choices=dimension["values"])
+                gr.Dropdown(
+                    label=label, choices=dimension["values"])
 
-            gr.Markdown("### About this data")
+            gr.Markdown("## About this data")
             gr.HTML(description)
 
 

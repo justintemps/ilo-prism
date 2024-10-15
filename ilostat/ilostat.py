@@ -6,6 +6,7 @@ from ilostat._area_dataflow import get_area_dataflows
 from ilostat._initialize import init_db
 from ilostat._validate_db import validate_db
 from ilostat._dimensions import get_dimensions
+from ilostat._dsd import get_dsd
 
 
 class ILOStat:
@@ -26,7 +27,7 @@ class ILOStat:
 
         self.__con = sqlite3.connect(
             "store/ilo-prism.db", check_same_thread=False)
-        self.__cur = self.__con.cursor()  # Fixed: Use self.__con instead of self.con
+        self.__cur = self.__con.cursor()
 
     def __del__(self):
         self.close()
@@ -80,6 +81,9 @@ class ILOStat:
 
     def get_dimensions(self, df: str):
         return get_dimensions(df, self.language)
+
+    def get_dsd(self, dataflow: str):
+        return get_dsd(dataflow)
 
 
 if __name__ == "__main__":
