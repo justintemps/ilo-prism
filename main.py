@@ -43,25 +43,26 @@ with gr.Blocks() as demo:
             # Everything from here on down is borked
             description = ilostat.get_dataflow_description(df)
             dimensions = ilostat.get_dimensions(df)
-            dimension_dropdown = {}
-            dimension_dropdowns = []
-            dimension_state = gr.State(value={})
-
-            def update_dynamic_state(*args):
-                return "bullshit"
+            dropdowns = []
 
             gr.Markdown("## Select dimensions")
+
+            def get_dropdown_values(*dropdown_values):
+                return ", ".join(dropdown_values)
+
             for dimension in dimensions:
+
                 code, label = dimension["dimension"]
 
-                dimension_dropdown[code] = gr.Dropdown(key=code,
-                                                       label=label,
-                                                       choices=dimension["values"])
+                dropdowns.append(gr.Dropdown(key=code,
+                                             label=label,
+                                             choices=dimension["values"]))
 
-                dimension_dropdowns.append(dimension_dropdown[code])
+            button = gr.Button("Submit")
+            textbox = gr.Textbox(label="Selected Values")
 
-                dimension_dropdown[code].input(
-                    update_dynamic_state, outputs=dimension_state)
+            button.click(fn=get_dropdown_values,
+                         inputs=dropdowns, outputs=textbox)
 
             gr.Markdown("## About this data")
             gr.HTML(description)
