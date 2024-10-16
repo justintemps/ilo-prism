@@ -27,7 +27,6 @@ class ILOStat:
 
         self.__con = sqlite3.connect(
             "store/ilo-prism.db", check_same_thread=False)
-        self.__cur = self.__con.cursor()
 
     def __del__(self):
         self.close()
@@ -48,44 +47,63 @@ class ILOStat:
             print("Database connection closed")
 
     def get_areas(self) -> list[tuple[str, str]]:
-        self.__cur.execute('''
-            SELECT  cn.name, ca.code
-            FROM cl_area AS ca
-            JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
-            JOIN language AS l ON cn.language_uid = l.language_uid
-            WHERE l.code = ?
-        ''', (self.language,))
-        return self.__cur.fetchall()
+        '''Get a list of areas (name, code) based on the selected language'''
+        cursor = self.__con.cursor()
+        try:
+            cursor.execute('''
+                SELECT  cn.name, ca.code
+                FROM cl_area AS ca
+                JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
+                JOIN language AS l ON cn.language_uid = l.language_uid
+                WHERE l.code = ?
+            ''', (self.language,))
+            results = cursor.fetchall()
+        finally:
+            cursor.close()  # Ensure cursor is closed
+        return results
 
     def get_dataflows(self, country: str):
-        self.__cur.execute('''
-            SELECT dn.name, d.code
-            FROM cl_area AS ca
-            JOIN cl_area_dataflow AS cad ON ca.cl_area_uid = cad.cl_area_uid
-            JOIN dataflow AS d ON cad.dataflow_uid = d.dataflow_uid
-            JOIN dataflow_name AS dn ON d.dataflow_uid = dn.dataflow_uid
-            JOIN language AS l ON dn.language_uid = l.language_uid
-            WHERE ca.code = ? AND l.code = ?
-        ''', (country, self.language))
-        return self.__cur.fetchall()
+        '''Get dataflows for a specific country'''
+        cursor = self.__con.cursor()
+        try:
+            cursor.execute('''
+                SELECT dn.name, d.code
+                FROM cl_area AS ca
+                JOIN cl_area_dataflow AS cad ON ca.cl_area_uid = cad.cl_area_uid
+                JOIN dataflow AS d ON cad.dataflow_uid = d.dataflow_uid
+                JOIN dataflow_name AS dn ON d.dataflow_uid = dn.dataflow_uid
+                JOIN language AS l ON dn.language_uid = l.language_uid
+                WHERE ca.code = ? AND l.code = ?
+            ''', (country, self.language))
+            return cursor.fetchall()
+        finally:
+            cursor.close()  # Ensure cursor is closed
 
     def get_dataflow_description(self, dataflow: str):
-        self.__cur.execute('''
-            SELECT dd.description
-            FROM dataflow AS d
-            JOIN dataflow_description AS dd ON d.dataflow_uid = dd.dataflow_uid
-            JOIN language AS l ON dd.language_uid = l.language_uid
-            WHERE d.code = ? AND l.code = ?
-        ''', (dataflow, self.language))
-        return self.__cur.fetchone()
+        '''Get the description of a dataflow'''
+        cursor = self.__con.cursor()
+        try:
+            cursor.execute('''
+                SELECT dd.description
+                FROM dataflow AS d
+                JOIN dataflow_description AS dd ON d.dataflow_uid = dd.dataflow_uid
+                JOIN language AS l ON dd.language_uid = l.language_uid
+                WHERE d.code = ? AND l.code = ?
+            ''', (dataflow, self.language))
+            return cursor.fetchone()
+        finally:
+            cursor.close()  # Ensure cursor is closed
 
     def get_dimensions(self, df: str):
+        '''Get the dimensions for a dataflow'''
         return get_dimensions(df, self.language)
 
     def get_dsd(self, dataflow: str):
+        '''Get the Data Structure Definition (DSD) for a dataflow'''
         return get_dsd(dataflow)
 
 
 if __name__ == "__main__":
     ilostat = ILOStat("en")
-    dataflows = print(ilostat.get_dataflows("FRA"))
+    dataflows = ilostat.get_dataflows("FRA")
+    print(dataflows)
