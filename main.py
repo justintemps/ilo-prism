@@ -1,72 +1,123 @@
 import gradio as gr
 from ilostat.ilostat import ILOStat
 
+# Setup ILOStat Client
 ilostat = ILOStat("en")
-
 ilostat_areas = ilostat.get_areas()
 
+# Instantiate Gradio components
 
-with gr.Blocks() as demo:
+submit_button = gr.Button("Submit")
+
+output_textara = gr.TextArea(
+    label="Final output")
+
+description_html = gr.HTML()
+
+
+def set_dataflow(area):
+    if area:
+        dataflows = ilostat.get_dataflows(area)
+        return gr.Dropdown(choices=dataflows, value=dataflows[0][1], interactive=True)
+    return None
+
+
+def set_description(dataflow):
+    description = ilostat.get_dataflow_description(dataflow)
+    return description
+
+
+def set_dimensions(dataflow):
+    if dataflow:
+        dimensions = ilostat.get_dimensions(dataflow)
+        return dimensions
+    return None
+
+
+def create_dimension_dropdown_handler(code):
+    def dropdown_handler(current_dims, new_dim):
+        # Filter out any existing tuple with the same code
+        current_dims = [(c, d) for c, d in current_dims if c != code]
+        # Add the new tuple with the provided code and dimension
+        return [*current_dims, (code, new_dim)]
+    return dropdown_handler
+
+
+def handle_submit_button(*args):
+    if args:
+        return ' '.join(map(str, args))
+
+
+with gr.Blocks(fill_height=True) as demo:
+
+    # Which dimensions are available for the dataflow
+    dimensions = gr.State(None)
+
+    # The currently selected dimensions
+    current_dimensions = gr.State([])
 
     # Render the title
     gr.Markdown("# Summarize a table from ILOSTAT")
 
-    # Which area to query data about
-    query_area = gr.State(None)
+    with gr.Row():
 
-    # Which dataflows to query
-    query_dataflow = gr.State(None)
+        with gr.Column():
 
-    # Areas dropdown menu
-    areas_dropdown = gr.Dropdown(
-        choices=ilostat_areas, label="First select a geographic region")
+            with gr.Row():
+                areas_dropdown = gr.Dropdown(
+                    choices=ilostat_areas, label="Select a geographic region")
 
-    # Update the query_area state on change
+            with gr.Row():
+                dataflows_dropdown = gr.Dropdown(
+                    label="Select an indicator from ILOSTAT", interactive=False)
+
+            @gr.render(inputs=dimensions)
+            def render_dimensions(dims):
+                if dims:
+                    for dimension in dims:
+                        with gr.Row():
+                            code, label = dimension["dimension"]
+                            choices = dimension["values"]
+
+                            handler = create_dimension_dropdown_handler(code)
+
+                            dimension_dropdown = gr.Dropdown(
+                                label=label,
+                                choices=choices,
+                                interactive=True
+                            )
+
+                            dimension_dropdown.change(handler,
+                                                      inputs=[
+                                                          current_dimensions,
+                                                          dimension_dropdown
+                                                      ],
+                                                      outputs=current_dimensions)
+
+            submit_button.render()
+
+        with gr.Column():
+
+            with gr.Row():
+                output_textara.render()
+
+            with gr.Row():
+                description_html.render()
+
     areas_dropdown.input(
-        lambda area: area, areas_dropdown, query_area)
+        set_dataflow, areas_dropdown, dataflows_dropdown)
 
-    @gr.render(inputs=[query_area, query_dataflow])
-    def render_dataflows(area, df):
-        # Once we select an area, now we can render the dataflows
-        if area:
-            dataflows = ilostat.get_dataflows(area)
-            dataflows_dropdown = gr.Dropdown(
-                choices=dataflows, label="Then select an indicator from ILOSTAT", value=df)
-            dataflows_dropdown.change(
-                lambda df: df, dataflows_dropdown, query_dataflow)
+    dataflows_dropdown.change(
+        set_description, dataflows_dropdown, description_html)
 
-    @gr.render(inputs=[query_area, query_dataflow])
-    def render_dimensions(area, df):
-        # Once we select the dataflows, now we can show the description
-        if df and len(df) > 0:
+    dataflows_dropdown.change(set_dimensions,
+                              dataflows_dropdown,
+                              dimensions)
 
-            # Everything from here on down is borked
-            description = ilostat.get_dataflow_description(df)
-            dimensions = ilostat.get_dimensions(df)
-            dropdowns = []
+    dataflows_dropdown.change(lambda: [], outputs=current_dimensions)
 
-            gr.Markdown("## Select dimensions")
-
-            def get_dropdown_values(*dropdown_values):
-                return ", ".join(dropdown_values)
-
-            for dimension in dimensions:
-
-                code, label = dimension["dimension"]
-
-                dropdowns.append(gr.Dropdown(key=code,
-                                             label=label,
-                                             choices=dimension["values"]))
-
-            button = gr.Button("Submit")
-            textbox = gr.Textbox(label="Selected Values")
-
-            button.click(fn=get_dropdown_values,
-                         inputs=dropdowns, outputs=textbox)
-
-            gr.Markdown("## About this data")
-            gr.HTML(description)
-
+    submit_button.click(handle_submit_button,
+                        inputs=current_dimensions, outputs=output_textara)
 
 if __name__ == "__main__":
     demo.launch()

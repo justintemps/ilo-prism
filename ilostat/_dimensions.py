@@ -39,11 +39,11 @@ def get_dimensions(df: str, lang: str):
                 }
 
                 for value in dims[dim].values:
-                    values = (cl.items[value].name.localizations[lang], value)
+                    values = (
+                        cl.items[value].name.localizations[lang], value.value)
                     dimension["values"].append(values)
 
                 dimensions.append(dimension)
-
     return dimensions
 
 
