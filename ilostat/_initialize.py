@@ -2,7 +2,7 @@ import sqlite3
 
 
 def init_db():
-    '''Initialize the database'''
+    """Initialize the database"""
 
     print("Initializing database")
 

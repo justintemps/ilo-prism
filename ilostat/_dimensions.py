@@ -35,12 +35,11 @@ def get_dimensions(df: str, lang: str):
                 # Initialize the dimension objct
                 dimension = {
                     "dimension": (cl.id, cl.name.localizations[lang]),
-                    "values": []
+                    "values": [],
                 }
 
                 for value in dims[dim].values:
-                    values = (
-                        cl.items[value].name.localizations[lang], value.value)
+                    values = (cl.items[value].name.localizations[lang], value.value)
                     dimension["values"].append(values)
 
                 dimensions.append(dimension)

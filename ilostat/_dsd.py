@@ -2,7 +2,7 @@ import sdmx
 
 
 def get_dsd(dataflow: str):
-    '''Get the DSD for the Dataflow and return it'''
+    """Get the DSD for the Dataflow and return it"""
     # Create an SDMX Client client
     ilostat = sdmx.Client("ILO")
 

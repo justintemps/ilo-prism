@@ -1,86 +1,74 @@
 import gradio as gr
 from ilostat.ilostat import ILOStat
+from app.handlers import (
+    create_dimension_handler,
+    set_dataflow,
+    set_description,
+    set_dimensions,
+    init_current_dimensions,
+    handle_submit_button,
+    get_areas,
+)
 
-# Setup ILOStat Client
-ilostat = ILOStat("en")
-ilostat_areas = ilostat.get_areas()
+# ===========================
+# App Components
+# ===========================
 
-# Instantiate Gradio components
+# UI components
+title = gr.Markdown("# Summarize a table from ILOSTAT")
 
+# Dropdown for geographic regions with dynamic choices
+ilostat_areas = get_areas()
+areas_dropdown = gr.Dropdown(choices=ilostat_areas, label="Select a geographic region")
+
+# Dropdown for dataflows (indicators) initialized as inactive
+dataflows_dropdown = gr.Dropdown(
+    label="Select an indicator from ILOSTAT", interactive=False
+)
+
+# Button to submit form data
 submit_button = gr.Button("Submit")
 
-output_textara = gr.TextArea(
-    label="Final output")
+# Text area for displaying the output
+output_textara = gr.TextArea(label="Final output")
 
+# HTML component to display dynamic descriptions
 description_html = gr.HTML()
-
-
-def set_dataflow(area):
-    if area:
-        dataflows = ilostat.get_dataflows(area)
-        return gr.Dropdown(choices=dataflows, value=dataflows[0][1], interactive=True)
-    return None
-
-
-def set_description(dataflow):
-    description = ilostat.get_dataflow_description(dataflow)
-    return description
-
-
-def set_dimensions(dataflow):
-    if dataflow:
-        dimensions = ilostat.get_dimensions(dataflow)
-        return dimensions
-    return None
-
-
-def init_current_dimensions(dims):
-    dimensions = []
-    if dims:
-        for dimension in dims:
-            code, _ = dimension["dimension"]
-            first_option = dimension["values"][0][1]
-            dimensions.append((code, first_option))
-    return dimensions
-
-
-def create_dimension_dropdown_handler(code):
-    def set_current_dimension(current_dims, new_dim):
-        # Filter out any existing tuple with the same code
-        current_dims = [(c, d) for c, d in current_dims if c != code]
-        # Add the new tuple with the provided code and dimension
-        return [*current_dims, (code, new_dim)]
-    return set_current_dimension
-
-
-def handle_submit_button(*args):
-    if args:
-        return ' '.join(map(str, args))
-
 
 with gr.Blocks(fill_height=True) as demo:
 
-    # Which dimensions are available for the dataflow
+    # ===========================
+    # Application State
+    # ===========================
+
+    # Dimensions available for the current Dataflow
     dimensions = gr.State(None)
 
-    # The currently selected dimensions
+    # The Dimensions currently selected by the user
     current_dimensions = gr.State([])
 
-    # Render the title
-    gr.Markdown("# Summarize a table from ILOSTAT")
+    # ===========================
+    # App Rendering Section
+    # ===========================
 
+    # Render the app title
+    title.render()
+
+    # Layout using rows and columns for the UI components
     with gr.Row():
 
+        # Left column for inputs
         with gr.Column():
 
+            # Render dropdown for area selection
             with gr.Row():
-                areas_dropdown = gr.Dropdown(
-                    choices=ilostat_areas, label="Select a geographic region")
+                areas_dropdown.render()
 
+            # Render dropdown for dataflow selection
             with gr.Row():
-                dataflows_dropdown = gr.Dropdown(
-                    label="Select an indicator from ILOSTAT", interactive=False)
+                dataflows_dropdown.render()
 
+            # Dynamically render dimension dropdowns based on selected dataflow
             @gr.render(inputs=dimensions)
             def render_dimensions(dims):
                 if dims:
@@ -89,46 +77,59 @@ with gr.Blocks(fill_height=True) as demo:
                             code, label = dimension["dimension"]
                             choices = dimension["values"]
 
-                            handler = create_dimension_dropdown_handler(code)
+                            handler = create_dimension_handler(code)
 
                             dimension_dropdown = gr.Dropdown(
-                                label=label,
-                                choices=choices,
-                                interactive=True
+                                label=label, choices=choices, interactive=True
                             )
 
-                            dimension_dropdown.change(handler,
-                                                      inputs=[
-                                                          current_dimensions,
-                                                          dimension_dropdown
-                                                      ],
-                                                      outputs=current_dimensions)
+                            dimension_dropdown.change(
+                                handler,
+                                inputs=[current_dimensions, dimension_dropdown],
+                                outputs=current_dimensions,
+                            )
 
+            # Render the submit button
             submit_button.render()
 
+        # Right column for outputs
         with gr.Column():
 
+            # Render text area for output display
             with gr.Row():
                 output_textara.render()
 
+            # Render HTML for description display
             with gr.Row():
                 description_html.render()
 
-    areas_dropdown.change(
-        set_dataflow, areas_dropdown, dataflows_dropdown)
+    # ===========================
+    # Component Event Handlers
+    # ===========================
 
-    dataflows_dropdown.change(
-        set_description, dataflows_dropdown, description_html)
+    # Event to populate dataflows based on selected area
+    areas_dropdown.change(set_dataflow, areas_dropdown, dataflows_dropdown)
 
-    dataflows_dropdown.change(set_dimensions,
-                              dataflows_dropdown,
-                              dimensions)
+    # Event to update description based on selected dataflow
+    dataflows_dropdown.change(set_description, dataflows_dropdown, description_html)
 
-    dimensions.change(init_current_dimensions,
-                      inputs=dimensions, outputs=current_dimensions)
+    # Event to set dimension details based on selected dataflow
+    dataflows_dropdown.change(set_dimensions, dataflows_dropdown, dimensions)
 
-    submit_button.click(handle_submit_button,
-                        inputs=current_dimensions, outputs=output_textara)
+    # Event to initialize the current dimensions whenever dimensions change
+    dimensions.change(
+        init_current_dimensions, inputs=dimensions, outputs=current_dimensions
+    )
+
+    # Event to handle submit button click, processing current dimensions and outputting results
+    submit_button.click(
+        handle_submit_button, inputs=current_dimensions, outputs=output_textara
+    )
+
+
+# ===========================
+# Main Program Entry Point
+# ===========================
 
 if __name__ == "__main__":
     demo.launch()

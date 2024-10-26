@@ -3,12 +3,19 @@ import sqlite3
 import progressbar
 
 # Widgets for the progress bar
-widgets = ["Downloading dataflows", " ", progressbar.SimpleProgress(
-), ' ', progressbar.Bar(), ' ', progressbar.AdaptiveETA()]
+widgets = [
+    "Downloading dataflows",
+    " ",
+    progressbar.SimpleProgress(),
+    " ",
+    progressbar.Bar(),
+    " ",
+    progressbar.AdaptiveETA(),
+]
 
 
 def get_dataflows():
-    '''Get a list of dataflows and insert them into the database together with their names.'''
+    """Get a list of dataflows and insert them into the database together with their names."""
 
     # Connect to the database
     con = sqlite3.connect("store/ilo-prism.db")
@@ -30,15 +37,13 @@ def get_dataflows():
     dataflows = dataflows_msg.dataflow
 
     # Set up the progress bar
-    bar = progressbar.ProgressBar(
-        max_value=(len(dataflows)), widgets=widgets)
+    bar = progressbar.ProgressBar(max_value=(len(dataflows)), widgets=widgets)
 
     for i, (dataflow) in enumerate(dataflows):
 
         bar.update(i + 1)
 
-        cur.execute(
-            "INSERT OR IGNORE INTO dataflow(code) VALUES(?)", (dataflow,))
+        cur.execute("INSERT OR IGNORE INTO dataflow(code) VALUES(?)", (dataflow,))
         dataflow_uid = cur.lastrowid
         con.commit()
 
@@ -46,24 +51,36 @@ def get_dataflows():
         names = dataflows[dataflow].name.localizations
         for lang in names:
             if lang in languages:
-                cur.execute('''
+                cur.execute(
+                    """
                             INSERT OR IGNORE INTO dataflow_name (
                                 dataflow_uid, language_uid, name
-                            ) VALUES(?, ?, ?)''',
-                            (dataflow_uid, languages[lang], dataflows[dataflow].name.localizations[lang]))
+                            ) VALUES(?, ?, ?)""",
+                    (
+                        dataflow_uid,
+                        languages[lang],
+                        dataflows[dataflow].name.localizations[lang],
+                    ),
+                )
 
         descriptions = dataflows[dataflow].description.localizations
         for lang in descriptions:
             if lang in languages:
-                cur.execute('''
+                cur.execute(
+                    """
                             INSERT OR IGNORE INTO dataflow_description (
                                 dataflow_uid, language_uid, description
-                            ) VALUES(?, ?, ?)''',
-                            (dataflow_uid, languages[lang], dataflows[dataflow].description.localizations[lang]))
+                            ) VALUES(?, ?, ?)""",
+                    (
+                        dataflow_uid,
+                        languages[lang],
+                        dataflows[dataflow].description.localizations[lang],
+                    ),
+                )
 
     bar.finish()
     cur.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_dataflows()

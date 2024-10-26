@@ -2,9 +2,9 @@ import sqlite3
 
 
 def validate_db():
-    '''Check if the database is initialized and the metadata is downloaded.
+    """Check if the database is initialized and the metadata is downloaded.
     Returns True if the metadata is downloaded and all of the tables are present,
-    False otherwise'''
+    False otherwise"""
     con = sqlite3.connect("store/ilo-prism.db")
     cur = con.cursor()
 

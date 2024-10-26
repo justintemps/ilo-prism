@@ -4,8 +4,15 @@ import time
 import progressbar
 
 # Widgets for the progress bar
-progressbar_widgets = ["Mapping dataflows to areas", " ", progressbar.SimpleProgress(
-), ' ', progressbar.Bar(), ' ', progressbar.AdaptiveETA()]
+progressbar_widgets = [
+    "Mapping dataflows to areas",
+    " ",
+    progressbar.SimpleProgress(),
+    " ",
+    progressbar.Bar(),
+    " ",
+    progressbar.AdaptiveETA(),
+]
 
 
 def get_area_dataflows():
@@ -30,15 +37,15 @@ def get_area_dataflows():
 
     # Set up the progress bar
     bar = progressbar.ProgressBar(
-        max_value=(len(dataflows)), widgets=progressbar_widgets)
+        max_value=(len(dataflows)), widgets=progressbar_widgets
+    )
 
     for i, df in enumerate(dataflows):
 
         bar.update(i + 1)
 
         # Get the uid of the dataflow from the db
-        cur.execute(
-            "SELECT dataflow_uid FROM dataflow WHERE dataflow.code = ?", (df,))
+        cur.execute("SELECT dataflow_uid FROM dataflow WHERE dataflow.code = ?", (df,))
         dataflow_uid = cur.fetchone()
         dataflow_uid = dataflow_uid[0]
 
@@ -58,8 +65,7 @@ def get_area_dataflows():
                 break
             except Exception as e:
                 if i < max_retries - 1:
-                    sleep_time = base_sleep_time * \
-                        (2 ** i)
+                    sleep_time = base_sleep_time * (2**i)
                     time.sleep(sleep_time)
                 else:
                     print(f"Attempt {i + 1} failed. No more retries left.")
@@ -88,21 +94,27 @@ def get_area_dataflows():
 
                 # Insert the dataflow into the database
                 cur.execute(
-                    "SELECT cl_area_uid FROM cl_area WHERE cl_area.code = ?", (area_code,))
+                    "SELECT cl_area_uid FROM cl_area WHERE cl_area.code = ?",
+                    (area_code,),
+                )
                 cl_area_uid = cur.fetchone()
                 # If the area exists in the database
                 if cl_area_uid:
                     cl_area_uid = cl_area_uid[0]
 
-                    cur.execute('''INSERT OR IGNORE INTO cl_area_dataflow (
+                    cur.execute(
+                        """INSERT OR IGNORE INTO cl_area_dataflow (
                                     dataflow_uid,
                                     cl_area_uid)
-                                    VALUES(?, ?)''',
-                                (dataflow_uid, cl_area_uid))
+                                    VALUES(?, ?)""",
+                        (dataflow_uid, cl_area_uid),
+                    )
                     con.commit()
                 else:
-                    print(f"Error: {df} includes Area {
-                          area_code} but this is not in the database")
+                    print(
+                        f"Error: {df} includes Area {
+                          area_code} but this is not in the database"
+                    )
 
         bar.update()
 
@@ -110,5 +122,5 @@ def get_area_dataflows():
     cur.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_area_dataflows()

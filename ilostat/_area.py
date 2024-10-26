@@ -4,13 +4,20 @@ import progressbar
 
 
 # Widgets for the progress bar
-widgets = ["Downloading areas", " ", progressbar.SimpleProgress(
-), ' ', progressbar.Bar(), ' ', progressbar.AdaptiveETA()]
+widgets = [
+    "Downloading areas",
+    " ",
+    progressbar.SimpleProgress(),
+    " ",
+    progressbar.Bar(),
+    " ",
+    progressbar.AdaptiveETA(),
+]
 
 
 def get_cl_areas():
-    '''Get a list of areas from the codelist and insert them into the database
-    together with their names.'''
+    """Get a list of areas from the codelist and insert them into the database
+    together with their names."""
 
     # Connect to the database
     con = sqlite3.connect("store/ilo-prism.db")
@@ -32,8 +39,7 @@ def get_cl_areas():
     codelist_items = codelist_msg.codelist.CL_AREA.items
 
     # Set up the progress bar
-    bar = progressbar.ProgressBar(
-        max_value=(len(codelist_items)), widgets=widgets)
+    bar = progressbar.ProgressBar(max_value=(len(codelist_items)), widgets=widgets)
 
     # For each item in the codelist,
     for i, item in enumerate(codelist_items):
@@ -51,11 +57,17 @@ def get_cl_areas():
         # Insert the names of the area into the database
         for lang in names:
             if lang in languages:
-                cur.execute('''
+                cur.execute(
+                    """
                             INSERT OR IGNORE INTO cl_area_name (
                                 cl_area_uid, language_uid, name
-                            ) VALUES(?, ?, ?)''',
-                            (cl_area_uid, languages[lang], codelist_items[item].name.localizations[lang]))
+                            ) VALUES(?, ?, ?)""",
+                    (
+                        cl_area_uid,
+                        languages[lang],
+                        codelist_items[item].name.localizations[lang],
+                    ),
+                )
                 con.commit()
 
     # Close the bar
@@ -65,5 +77,5 @@ def get_cl_areas():
     con.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_cl_areas()
