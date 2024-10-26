@@ -34,13 +34,23 @@ def set_dimensions(dataflow):
     return None
 
 
+def init_current_dimensions(dims):
+    dimensions = []
+    if dims:
+        for dimension in dims:
+            code, _ = dimension["dimension"]
+            first_option = dimension["values"][0][1]
+            dimensions.append((code, first_option))
+    return dimensions
+
+
 def create_dimension_dropdown_handler(code):
-    def dropdown_handler(current_dims, new_dim):
+    def set_current_dimension(current_dims, new_dim):
         # Filter out any existing tuple with the same code
         current_dims = [(c, d) for c, d in current_dims if c != code]
         # Add the new tuple with the provided code and dimension
         return [*current_dims, (code, new_dim)]
-    return dropdown_handler
+    return set_current_dimension
 
 
 def handle_submit_button(*args):
@@ -104,7 +114,7 @@ with gr.Blocks(fill_height=True) as demo:
             with gr.Row():
                 description_html.render()
 
-    areas_dropdown.input(
+    areas_dropdown.change(
         set_dataflow, areas_dropdown, dataflows_dropdown)
 
     dataflows_dropdown.change(
@@ -114,7 +124,8 @@ with gr.Blocks(fill_height=True) as demo:
                               dataflows_dropdown,
                               dimensions)
 
-    dataflows_dropdown.change(lambda: [], outputs=current_dimensions)
+    dimensions.change(init_current_dimensions,
+                      inputs=dimensions, outputs=current_dimensions)
 
     submit_button.click(handle_submit_button,
                         inputs=current_dimensions, outputs=output_textara)
