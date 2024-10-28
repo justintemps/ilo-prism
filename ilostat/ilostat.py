@@ -6,11 +6,11 @@ from ilostat._area_dataflow import get_area_dataflows
 from ilostat._initialize import init_db
 from ilostat._validate_db import validate_db
 from ilostat._dimensions import get_dimensions
-from ilostat._dsd import get_dsd
+from ilostat._query import ILOStatQuery
 
 
 class ILOStat:
-    '''A class to interact with the ILOSTAT API'''
+    """A class to interact with the ILOSTAT API"""
 
     def __init__(self, language: Literal["en", "fr", "es"] = "en"):
 
@@ -25,8 +25,7 @@ class ILOStat:
             print("Refreshing metadata...")
             self.__init_metadata()
 
-        self.__con = sqlite3.connect(
-            "store/ilo-prism.db", check_same_thread=False)
+        self.__con = sqlite3.connect("store/ilo-prism.db", check_same_thread=False)
 
     def __del__(self):
         self.close()
@@ -41,32 +40,36 @@ class ILOStat:
         get_area_dataflows()
 
     def close(self):
-        '''Close the database connection'''
+        """Close the database connection"""
         if self.__con:
             self.__con.close()
             print("Database connection closed")
 
     def get_areas(self) -> list[tuple[str, str]]:
-        '''Get a list of areas (name, code) based on the selected language'''
+        """Get a list of areas (name, code) based on the selected language"""
         cursor = self.__con.cursor()
         try:
-            cursor.execute('''
+            cursor.execute(
+                """
                 SELECT  cn.name, ca.code
                 FROM cl_area AS ca
                 JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
                 JOIN language AS l ON cn.language_uid = l.language_uid
                 WHERE l.code = ?
-            ''', (self.language,))
+            """,
+                (self.language,),
+            )
             results = cursor.fetchall()
         finally:
             cursor.close()  # Ensure cursor is closed
         return results
 
     def get_dataflows(self, country: str):
-        '''Get dataflows for a specific country'''
+        """Get dataflows for a specific country"""
         cursor = self.__con.cursor()
         try:
-            cursor.execute('''
+            cursor.execute(
+                """
                 SELECT dn.name, d.code
                 FROM cl_area AS ca
                 JOIN cl_area_dataflow AS cad ON ca.cl_area_uid = cad.cl_area_uid
@@ -74,33 +77,37 @@ class ILOStat:
                 JOIN dataflow_name AS dn ON d.dataflow_uid = dn.dataflow_uid
                 JOIN language AS l ON dn.language_uid = l.language_uid
                 WHERE ca.code = ? AND l.code = ?
-            ''', (country, self.language))
+            """,
+                (country, self.language),
+            )
             return cursor.fetchall()
         finally:
             cursor.close()  # Ensure cursor is closed
 
     def get_dataflow_description(self, dataflow: str):
-        '''Get the description of a dataflow'''
+        """Get the description of a dataflow"""
         cursor = self.__con.cursor()
         try:
-            cursor.execute('''
+            cursor.execute(
+                """
                 SELECT dd.description
                 FROM dataflow AS d
                 JOIN dataflow_description AS dd ON d.dataflow_uid = dd.dataflow_uid
                 JOIN language AS l ON dd.language_uid = l.language_uid
                 WHERE d.code = ? AND l.code = ?
-            ''', (dataflow, self.language))
+            """,
+                (dataflow, self.language),
+            )
             return cursor.fetchone()
         finally:
             cursor.close()  # Ensure cursor is closed
 
     def get_dimensions(self, df: str):
-        '''Get the dimensions for a dataflow'''
+        """Get the dimensions for a dataflow"""
         return get_dimensions(df, self.language)
 
-    def get_dsd(self, dataflow: str):
-        '''Get the Data Structure Definition (DSD) for a dataflow'''
-        return get_dsd(dataflow)
+    def query(self, dataflow: str, dimensions: dict[str, str], params: dict[str, str]):
+        return ILOStatQuery(dataflow=dataflow, dimensions=dimensions, params=params)
 
 
 if __name__ == "__main__":

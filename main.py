@@ -45,7 +45,7 @@ with gr.Blocks(fill_height=True) as demo:
     dimensions = gr.State(None)
 
     # The Dimensions currently selected by the user
-    current_dimensions = gr.State([])
+    current_dimensions = gr.State({})
 
     # ===========================
     # App Rendering Section
@@ -123,7 +123,9 @@ with gr.Blocks(fill_height=True) as demo:
 
     # Event to handle submit button click, processing current dimensions and outputting results
     submit_button.click(
-        handle_submit_button, inputs=current_dimensions, outputs=output_textara
+        handle_submit_button,
+        inputs=[areas_dropdown, dataflows_dropdown, current_dimensions],
+        outputs=output_textara,
     )
 
 

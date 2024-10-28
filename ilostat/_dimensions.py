@@ -34,7 +34,7 @@ def get_dimensions(df: str, lang: str):
             if cl:
                 # Initialize the dimension objct
                 dimension = {
-                    "dimension": (cl.id, cl.name.localizations[lang]),
+                    "dimension": (dim.concept_identity.id, cl.name.localizations[lang]),
                     "values": [],
                 }
 

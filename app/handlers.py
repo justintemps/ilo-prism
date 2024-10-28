@@ -26,24 +26,27 @@ def set_dimensions(dataflow):
 
 
 def init_current_dimensions(dims):
-    dimensions = []
+    dimensions = {}
     if dims:
         for dimension in dims:
             code, _ = dimension["dimension"]
             first_option = dimension["values"][0][1]
-            dimensions.append((code, first_option))
+            dimensions[code] = first_option
     return dimensions
 
 
-def create_dimension_handler(code):
-    def set_current_dimension(current_dims, new_dim):
-        # Filter out any existing tuple with the same code
-        current_dims = [(c, d) for c, d in current_dims if c != code]
-        # Add the new tuple with the provided code and dimension
-        return [*current_dims, (code, new_dim)]
+def create_dimension_handler(code: str):
+    def set_current_dimension(current_dims: dict, new_dim: str):
+        new_dims = current_dims
+        new_dims[code] = new_dim
+        return new_dims
 
     return set_current_dimension
 
 
-def handle_submit_button(dimensions):
-    return str(dimensions)
+def handle_submit_button(area: str, dataflow: str, dimensions: dict[str, str]):
+    print(area)
+    dimensions["REF_AREA"] = area
+    params = dict(startPeriod="2010")
+    query = ilostat.query(dataflow=dataflow, dimensions=dimensions, params=params)
+    return query.data()
