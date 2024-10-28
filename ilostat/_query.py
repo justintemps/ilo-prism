@@ -1,4 +1,5 @@
 import sdmx
+import pandas as pd
 
 
 class ILOStatQuery:
@@ -35,5 +36,35 @@ class ILOStatQuery:
             params=self.params,
         )
 
-        # Return the data message
-        return data_msg.response.headers["content-type"]
+        data = data_msg.data[0]
+
+        series_data = sdmx.to_pandas(data)
+
+        df = series_data.reset_index(name="value")
+
+        return df
+
+
+if __name__ == "__main__":
+    df = "DF_UNE_TUNE_SEX_MTS_DSB_NB"
+
+    dimensions = {
+        "FREQ": "A",
+        "MEASURE": "UNE_TUNE_NB",
+        "SEX": "SEX_T",
+        "MTS": "MTS_DETAILS_MRD",
+        "DSB": "DSB_STATUS_NODIS",
+        "REF_AREA": "ITA",
+    }
+
+    params = {"startPeriod": "2015"}
+
+    query = ILOStatQuery(
+        dataflow="DF_UNE_TUNE_SEX_MTS_DSB_NB", dimensions=dimensions, params=params
+    )
+
+    result = query.data()
+
+    print(type(result))
+
+    print(result)

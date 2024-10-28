@@ -30,7 +30,7 @@ dataflows_dropdown = gr.Dropdown(
 submit_button = gr.Button("Submit")
 
 # Text area for displaying the output
-output_textara = gr.TextArea(label="Final output")
+output_dataframe = gr.Dataframe(label="Final output")
 
 # HTML component to display dynamic descriptions
 description_html = gr.HTML()
@@ -97,7 +97,7 @@ with gr.Blocks(fill_height=True) as demo:
 
             # Render text area for output display
             with gr.Row():
-                output_textara.render()
+                output_dataframe.render()
 
             # Render HTML for description display
             with gr.Row():
@@ -125,7 +125,7 @@ with gr.Blocks(fill_height=True) as demo:
     submit_button.click(
         handle_submit_button,
         inputs=[areas_dropdown, dataflows_dropdown, current_dimensions],
-        outputs=output_textara,
+        outputs=output_dataframe,
     )
 
 
