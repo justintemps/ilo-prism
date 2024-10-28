@@ -8,6 +8,7 @@ from app.handlers import (
     init_current_dimensions,
     handle_submit_button,
     get_areas,
+    get_last_20_years,
 )
 
 # ===========================
@@ -24,6 +25,25 @@ areas_dropdown = gr.Dropdown(choices=ilostat_areas, label="Select a geographic r
 # Dropdown for dataflows (indicators) initialized as inactive
 dataflows_dropdown = gr.Dropdown(
     label="Select an indicator from ILOSTAT", interactive=False
+)
+
+# Last 20 years
+last_20_years = get_last_20_years()
+
+# Dropdown for starting year
+start_year_dropdown = gr.Dropdown(
+    label="Select a starting year",
+    choices=last_20_years,
+    value=last_20_years[10],
+    interactive=True,
+)
+
+# Dropdown for starting year
+end_year_dropdown = gr.Dropdown(
+    label="Select an ending year",
+    choices=last_20_years,
+    value=last_20_years[-1],
+    interactive=True,
 )
 
 # Button to submit form data
@@ -64,6 +84,12 @@ with gr.Blocks(fill_height=True) as demo:
             with gr.Row():
                 areas_dropdown.render()
 
+            with gr.Row():
+
+                start_year_dropdown.render()
+
+                end_year_dropdown.render()
+
             # Render dropdown for dataflow selection
             with gr.Row():
                 dataflows_dropdown.render()
@@ -93,7 +119,7 @@ with gr.Blocks(fill_height=True) as demo:
             submit_button.render()
 
         # Right column for outputs
-        with gr.Column():
+        with gr.Column(scale=2):
 
             # Render text area for output display
             with gr.Row():
@@ -124,7 +150,13 @@ with gr.Blocks(fill_height=True) as demo:
     # Event to handle submit button click, processing current dimensions and outputting results
     submit_button.click(
         handle_submit_button,
-        inputs=[areas_dropdown, dataflows_dropdown, current_dimensions],
+        inputs=[
+            areas_dropdown,
+            dataflows_dropdown,
+            current_dimensions,
+            start_year_dropdown,
+            end_year_dropdown,
+        ],
         outputs=output_dataframe,
     )
 

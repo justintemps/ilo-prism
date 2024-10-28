@@ -96,7 +96,7 @@ class ILOStat:
                 JOIN dataflow_description AS dd ON d.dataflow_uid = dd.dataflow_uid
                 JOIN language AS l ON dd.language_uid = l.language_uid
                 WHERE d.code = ? AND l.code = ?
-            """,
+                """,
                 (dataflow, self.language),
             )
             return cursor.fetchone()

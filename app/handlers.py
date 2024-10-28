@@ -1,4 +1,5 @@
 import gradio as gr
+from datetime import datetime
 from . import ilostat
 
 
@@ -44,8 +45,19 @@ def create_dimension_handler(code: str):
     return set_current_dimension
 
 
-def handle_submit_button(area: str, dataflow: str, dimensions: dict[str, str]):
+def handle_submit_button(
+    area: str,
+    dataflow: str,
+    dimensions: dict[str, str],
+    start_period: str,
+    end_period: str,
+):
     dimensions["REF_AREA"] = area
-    params = dict(startPeriod="2015")
+    params = dict(startPeriod=start_period, endPeriod=end_period)
     query = ilostat.query(dataflow=dataflow, dimensions=dimensions, params=params)
     return query.data()
+
+
+def get_last_20_years():
+    current_year = datetime.now().year
+    return [str(year) for year in range(current_year - 20, current_year + 1)]
