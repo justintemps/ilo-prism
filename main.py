@@ -27,7 +27,7 @@ dataflows_dropdown = gr.Dropdown(
 )
 
 # Button to submit form data
-submit_button = gr.Button("Submit")
+submit_button = gr.Button("Get data")
 
 # Text area for displaying the output
 output_dataframe = gr.Dataframe(label="Final output")

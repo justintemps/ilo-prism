@@ -77,7 +77,8 @@ class ILOStat:
                 JOIN dataflow_name AS dn ON d.dataflow_uid = dn.dataflow_uid
                 JOIN language AS l ON dn.language_uid = l.language_uid
                 WHERE ca.code = ? AND l.code = ?
-            """,
+                ORDER BY dn.name ASC;
+                """,
                 (country, self.language),
             )
             return cursor.fetchall()

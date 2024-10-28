@@ -45,7 +45,6 @@ def create_dimension_handler(code: str):
 
 
 def handle_submit_button(area: str, dataflow: str, dimensions: dict[str, str]):
-    print(area)
     dimensions["REF_AREA"] = area
     params = dict(startPeriod="2015")
     query = ilostat.query(dataflow=dataflow, dimensions=dimensions, params=params)
