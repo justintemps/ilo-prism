@@ -10,7 +10,7 @@ def get_areas():
 def set_dataflow(area):
     if area:
         dataflows = ilostat.get_dataflows(area)
-        return gr.Dropdown(choices=dataflows, value=dataflows[0][1], interactive=True)
+        return gr.Dropdown(choices=dataflows, value=dataflows[0][1], visible=True)
     return None
 
 

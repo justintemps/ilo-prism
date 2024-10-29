@@ -15,7 +15,10 @@ class ILOStatQuery:
         self._ilostat = sdmx.Client("ILO")
 
         self._dsd = None
+        self._codelist = None
+
         self._set_dsd()
+        self._set_codelist()
 
     def _set_dsd(self):
         # Get the dataflow message
@@ -27,6 +30,23 @@ class ILOStatQuery:
         # Get the DSD
         self._dsd = df_flow.structure
 
+    def _set_codelist(self):
+        codelist = {}
+        for dim in self._dsd.dimensions.components:
+            dim_id = dim.id
+            dim_name = self._dsd.dimensions.get(dim_id).local_representation.enumerated
+            codelist[dim_id] = dim_name
+        self._codelist = codelist
+
+    def _get_readable_name(self, column, value):
+        try:
+            return self._codelist[column][value].name["en"]
+        except KeyError:
+            return value
+
+    def codelist(self):
+        return self._codelist
+
     def data(self):
         # Get the dataflow message
         data_msg = self._ilostat.data(
@@ -35,12 +55,15 @@ class ILOStatQuery:
             key=self.dimensions,
             params=self.params,
         )
-
         data = data_msg.data[0]
-
         series_data = sdmx.to_pandas(data)
-
         df = series_data.reset_index(name="value")
+
+        for column in df.columns:
+            if column in self._codelist and self._codelist[column] is not None:
+                df[column] = df[column].apply(
+                    lambda x: self._get_readable_name(column, x)
+                )
 
         return df
 
@@ -64,7 +87,5 @@ if __name__ == "__main__":
     )
 
     result = query.data()
-
-    print(type(result))
 
     print(result)

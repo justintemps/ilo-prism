@@ -20,11 +20,14 @@ title = gr.Markdown("# Summarize a table from ILOSTAT")
 
 # Dropdown for geographic regions with dynamic choices
 ilostat_areas = get_areas()
-areas_dropdown = gr.Dropdown(choices=ilostat_areas, label="Select a geographic region")
+areas_dropdown = gr.Dropdown(
+    choices=ilostat_areas, label="Select a geographic region", value=lambda: None
+)
 
 # Dropdown for dataflows (indicators) initialized as inactive
 dataflows_dropdown = gr.Dropdown(
-    label="Select an indicator from ILOSTAT", interactive=False
+    label="Select an indicator from ILOSTAT",
+    visible=False,
 )
 
 # Last 20 years
