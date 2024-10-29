@@ -10,7 +10,7 @@ def get_areas():
 def set_dataflow(area):
     if area:
         dataflows = ilostat.get_dataflows(area)
-        return gr.Dropdown(choices=dataflows, value=dataflows[0][1], visible=True)
+        return gr.Dropdown(choices=dataflows, value=dataflows[0][1], interactive=True)
     return None
 
 
@@ -55,7 +55,10 @@ def handle_submit_button(
     dimensions["REF_AREA"] = area
     params = dict(startPeriod=start_period, endPeriod=end_period)
     query = ilostat.query(dataflow=dataflow, dimensions=dimensions, params=params)
-    return query.data()
+
+    result = query.data()
+
+    return result
 
 
 def get_last_20_years():

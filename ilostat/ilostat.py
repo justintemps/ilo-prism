@@ -1,12 +1,12 @@
 from typing import Literal
 import sqlite3
-from ilostat._dataflow import get_dataflows
-from ilostat._area import get_cl_areas
-from ilostat._area_dataflow import get_area_dataflows
-from ilostat._initialize import init_db
-from ilostat._validate_db import validate_db
-from ilostat._dimensions import get_dimensions
-from ilostat._query import ILOStatQuery
+from ._dataflow import get_dataflows
+from ._area import get_cl_areas
+from ._area_dataflow import get_area_dataflows
+from ._initialize import init_db
+from ._validate_db import validate_db
+from ._dimensions import get_dimensions
+from ._query import ILOStatQuery
 
 
 class ILOStat:
@@ -108,7 +108,12 @@ class ILOStat:
         return get_dimensions(df, self.language)
 
     def query(self, dataflow: str, dimensions: dict[str, str], params: dict[str, str]):
-        return ILOStatQuery(dataflow=dataflow, dimensions=dimensions, params=params)
+        return ILOStatQuery(
+            dataflow=dataflow,
+            dimensions=dimensions,
+            params=params,
+            language=self.language,
+        )
 
 
 if __name__ == "__main__":
