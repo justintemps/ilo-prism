@@ -9,54 +9,83 @@ from ._dimensions import get_dimensions
 from ._query import ILOStatQuery
 
 
+from typing import Literal
+import sqlite3
+
+
 class ILOStat:
-    """A class to interact with the ILOSTAT API"""
+    """A class to interact with the ILOSTAT API, providing access to metadata,
+    dataflows, and descriptions for various country and area data.
+    """
 
     def __init__(self, language: Literal["en", "fr", "es"] = "en"):
+        """
+        Initializes the ILOStat instance with a specific language and checks
+        if the metadata is valid. If not, initializes metadata.
 
+        Parameters:
+        - language: The language code ('en', 'fr', 'es') for data retrieval.
+        """
         if language not in ["en", "fr", "es"]:
             raise ValueError("Language must be one of 'en', 'fr', or 'es'")
 
         self.language = language
 
+        # Validate metadata; refresh if invalid
         metadata_valid = self.__validate_metadata()
-
         if not metadata_valid:
             print("Refreshing metadata...")
             self.__init_metadata()
 
+        # Establish connection to the SQLite database
         self.__con = sqlite3.connect("store/ilo-prism.db", check_same_thread=False)
 
     def __del__(self):
+        """Destructor to ensure the database connection is closed upon deletion."""
         self.close()
 
-    def __validate_metadata(self):
+    def __validate_metadata(self) -> bool:
+        """
+        Checks if the metadata is valid in the database.
+
+        Returns:
+        - bool: True if metadata is valid, False otherwise.
+        """
         return validate_db()
 
     def __init_metadata(self):
+        """
+        Initializes metadata in the database by creating required tables and
+        populating data for areas, dataflows, and area-specific dataflows.
+        """
         init_db()
         get_cl_areas()
         get_dataflows()
         get_area_dataflows()
 
     def close(self):
-        """Close the database connection"""
+        """Closes the database connection if it is open."""
         if self.__con:
             self.__con.close()
             print("Database connection closed")
 
     def get_areas(self) -> list[tuple[str, str]]:
-        """Get a list of areas (name, code) based on the selected language"""
+        """
+        Retrieves a list of areas (name and code) based on the selected language.
+
+        Returns:
+        - list[tuple[str, str]]: A list of area names and their corresponding codes.
+        """
         cursor = self.__con.cursor()
         try:
             cursor.execute(
                 """
-                SELECT  cn.name, ca.code
+                SELECT cn.name, ca.code
                 FROM cl_area AS ca
                 JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
                 JOIN language AS l ON cn.language_uid = l.language_uid
                 WHERE l.code = ?
-            """,
+                """,
                 (self.language,),
             )
             results = cursor.fetchall()
@@ -65,7 +94,16 @@ class ILOStat:
         return results
 
     def get_dataflows(self, country: str):
-        """Get dataflows for a specific country"""
+        """
+        Retrieves available dataflows for a specified country.
+
+        Parameters:
+        - country (str): The country code for which dataflows are retrieved.
+
+        Returns:
+        - list[tuple[str, str]]: A list of dataflows, each represented by a tuple
+                                  containing the name and code.
+        """
         cursor = self.__con.cursor()
         try:
             cursor.execute(
@@ -86,7 +124,15 @@ class ILOStat:
             cursor.close()  # Ensure cursor is closed
 
     def get_dataflow_description(self, dataflow: str):
-        """Get the description of a dataflow"""
+        """
+        Retrieves the description for a specified dataflow.
+
+        Parameters:
+        - dataflow (str): The code of the dataflow to retrieve the description for.
+
+        Returns:
+        - tuple: The description of the dataflow, if found.
+        """
         cursor = self.__con.cursor()
         try:
             cursor.execute(
@@ -104,10 +150,29 @@ class ILOStat:
             cursor.close()  # Ensure cursor is closed
 
     def get_dimensions(self, df: str):
-        """Get the dimensions for a dataflow"""
+        """
+        Retrieves the dimensions available for a specified dataflow.
+
+        Parameters:
+        - df (str): The dataflow code to retrieve dimensions for.
+
+        Returns:
+        - Dimensions data retrieved via the get_dimensions function.
+        """
         return get_dimensions(df, self.language)
 
     def query(self, dataflow: str, dimensions: dict[str, str], params: dict[str, str]):
+        """
+        Queries the ILOSTAT API based on specified dataflow, dimensions, and parameters.
+
+        Parameters:
+        - dataflow (str): The dataflow code to query.
+        - dimensions (dict[str, str]): Key-value pairs representing dimension constraints.
+        - params (dict[str, str]): Additional parameters for the query.
+
+        Returns:
+        - ILOStatQuery: An ILOStatQuery object containing the query result.
+        """
         return ILOStatQuery(
             dataflow=dataflow,
             dimensions=dimensions,
@@ -117,6 +182,7 @@ class ILOStat:
 
 
 if __name__ == "__main__":
+    # Example usage of the ILOStat class
     ilostat = ILOStat("en")
     dataflows = ilostat.get_dataflows("FRA")
     print(dataflows)
