@@ -91,11 +91,6 @@ class ILOStatQuery:
         # Remember the URL for the most recent query
         self._set_url(data_msg.response.url)
 
-        print(
-            "UNIT_MULT on observation",
-            data_msg.data[0].obs[0].attached_attribute["UNIT_MULT"],
-        )
-
         # Convert the SDMX message to a Pandas DataFrame
         data = data_msg.data[0]
         df = sdmx.to_pandas(data).reset_index(name="value")
@@ -104,10 +99,10 @@ class ILOStatQuery:
         for index, observation in enumerate(data.obs):
             multiplier = pow(10, int(observation.attached_attribute["UNIT_MULT"].value))
             decimals = int(observation.attached_attribute["DECIMALS"].value)
-            # Apply the multiplier
-            df["value"][index] = df["value"][index] * multiplier
-            # Round the value to the specified number of decimals
-            df["value"][index] = round(df["value"][index], decimals)
+            # Apply the multiplier and round the value to the specified number of decimals
+            df.loc[index, "value"] = round(
+                df.loc[index, "value"] * multiplier, decimals
+            )
 
         # Apply human-readable names to dimension columns
         for column in df.columns:
@@ -139,16 +134,27 @@ class ILOStatQuery:
 
 if __name__ == "__main__":
     # Define parameters for a sample query
-    df = "DF_EAR_4HST_SEX_CUR_NB"
-    dimensions = {"FREQ": "A", "SEX": "SEX_T", "REF_AREA": "ITA"}
+    df = "DF_EAR_4MTH_SEX_CUR_NB"
+
+    dimensions = {
+        "FREQ": "A",
+        "MEASURE": "EAR_4MTH_NB",
+        "SEX": "SEX_T",
+        "CUR": "CUR_TYPE_PPP",
+        "REF_AREA": "CMR",
+    }
     params = {"startPeriod": "2014", "endPeriod": "2024"}
 
     # Instantiate and run the query
     query = ILOStatQuery(
         language="en", dataflow=df, dimensions=dimensions, params=params
     )
+
     result = query.data()
 
     print("Query URL", query.url)
+    print("dataflow", query.dataflow)
+    print("dimensions", query.dimensions)
+    print("params", query.params)
 
     print(result)
