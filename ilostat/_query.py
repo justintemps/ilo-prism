@@ -29,14 +29,17 @@ class ILOStatQuery:
         # Internal attributes to store metadata, multiplier, and code list mappings
         self._dsd = None
         self._codelist = None
-        self._multiplier = 1
+        self._multiplier = 0
         self._decimals = 1
+        self._url = None
 
         # Set data structure definition, code list, multiplier and decimals on initialization
         self._set_dsd()
         self._set_codelist()
-        self._set_multiplier()
-        self._set_decimals()
+
+    def _set_url(self, url):
+        """Set the URL for the query based on the dataflow, dimensions, and parameters."""
+        self._url = url
 
     def _set_dsd(self):
         """Retrieve and set the data structure definition (DSD) for the specified dataflow."""
@@ -52,18 +55,6 @@ class ILOStatQuery:
             dim_name = self._dsd.dimensions.get(dim_id).local_representation.enumerated
             codelist[dim_id] = dim_name  # Map each dimension ID to its code list
         self._codelist = codelist
-
-    def _set_multiplier(self):
-        """Set the multiplier based on the UNIT_MULT attribute in the DSD, if available."""
-        for component in self._dsd.attributes.components:
-            if component.id == "UNIT_MULT":
-                self._multiplier = 10**component.usage_status.value
-
-    def _set_decimals(self):
-        """Set the decimals based on the DECIMALS attribute in the DSD, if available."""
-        for component in self._dsd.attributes.components:
-            if component.id == "DECIMALS":
-                self._decimals = component.usage_status.value
 
     def _get_readable_name(self, column, value):
         """
@@ -96,14 +87,27 @@ class ILOStatQuery:
             key=self.dimensions,
             params=self.params,
         )
+
+        # Remember the URL for the most recent query
+        self._set_url(data_msg.response.url)
+
+        print(
+            "UNIT_MULT on observation",
+            data_msg.data[0].obs[0].attached_attribute["UNIT_MULT"],
+        )
+
+        # Convert the SDMX message to a Pandas DataFrame
         data = data_msg.data[0]
         df = sdmx.to_pandas(data).reset_index(name="value")
 
-        # Adjust values by the multiplier if applicable
-        df["value"] = df["value"] * self._multiplier
-
-        # Show the right number of decimals
-        df["value"] = df["value"].round(self._decimals)
+        # Format the number with the right multiplier and decimals
+        for index, observation in enumerate(data.obs):
+            multiplier = pow(10, int(observation.attached_attribute["UNIT_MULT"].value))
+            decimals = int(observation.attached_attribute["DECIMALS"].value)
+            # Apply the multiplier
+            df["value"][index] = df["value"][index] * multiplier
+            # Round the value to the specified number of decimals
+            df["value"][index] = round(df["value"][index], decimals)
 
         # Apply human-readable names to dimension columns
         for column in df.columns:
@@ -123,14 +127,9 @@ class ILOStatQuery:
         return df
 
     @property
-    def decimals(self):
-        """Return the number of decimals for the data values."""
-        return self._decimals
-
-    @property
-    def multiplier(self):
-        """Return the multiplier for the data values."""
-        return self._multiplier
+    def url(self):
+        """Return the URL for the most recent query. Only available after calling data()."""
+        return self._url
 
     @property
     def codelist(self):
@@ -140,20 +139,16 @@ class ILOStatQuery:
 
 if __name__ == "__main__":
     # Define parameters for a sample query
-    df = "DF_UNE_TUNE_SEX_MTS_DSB_NB"
-    dimensions = {
-        "FREQ": "A",
-        "MEASURE": "UNE_TUNE_NB",
-        "SEX": "SEX_T",
-        "MTS": "MTS_DETAILS_MRD",
-        "DSB": "DSB_STATUS_NODIS",
-        "REF_AREA": "ITA",
-    }
-    params = {"startPeriod": "2015"}
+    df = "DF_EAR_4HST_SEX_CUR_NB"
+    dimensions = {"FREQ": "A", "SEX": "SEX_T", "REF_AREA": "ITA"}
+    params = {"startPeriod": "2014", "endPeriod": "2024"}
 
     # Instantiate and run the query
     query = ILOStatQuery(
         language="en", dataflow=df, dimensions=dimensions, params=params
     )
     result = query.data()
+
+    print("Query URL", query.url)
+
     print(result)
