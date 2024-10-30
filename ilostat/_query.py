@@ -30,11 +30,13 @@ class ILOStatQuery:
         self._dsd = None
         self._codelist = None
         self._multiplier = 1
+        self._decimals = 1
 
-        # Set data structure definition, code list, and multiplier on initialization
+        # Set data structure definition, code list, multiplier and decimals on initialization
         self._set_dsd()
         self._set_codelist()
         self._set_multiplier()
+        self._set_decimals()
 
     def _set_dsd(self):
         """Retrieve and set the data structure definition (DSD) for the specified dataflow."""
@@ -56,6 +58,12 @@ class ILOStatQuery:
         for component in self._dsd.attributes.components:
             if component.id == "UNIT_MULT":
                 self._multiplier = 10**component.usage_status.value
+
+    def _set_decimals(self):
+        """Set the decimals based on the DECIMALS attribute in the DSD, if available."""
+        for component in self._dsd.attributes.components:
+            if component.id == "DECIMALS":
+                self._decimals = component.usage_status.value
 
     def _get_readable_name(self, column, value):
         """
@@ -94,6 +102,9 @@ class ILOStatQuery:
         # Adjust values by the multiplier if applicable
         df["value"] = df["value"] * self._multiplier
 
+        # Show the right number of decimals
+        df["value"] = df["value"].round(self._decimals)
+
         # Apply human-readable names to dimension columns
         for column in df.columns:
             if column in self._codelist and self._codelist[column] is not None:
@@ -110,6 +121,21 @@ class ILOStatQuery:
         df.rename(columns=column_rename_map, inplace=True)
 
         return df
+
+    @property
+    def decimals(self):
+        """Return the number of decimals for the data values."""
+        return self._decimals
+
+    @property
+    def multiplier(self):
+        """Return the multiplier for the data values."""
+        return self._multiplier
+
+    @property
+    def codelist(self):
+        """Return the code list with human-readable names for each dimension."""
+        return self._codelist
 
 
 if __name__ == "__main__":
@@ -130,6 +156,4 @@ if __name__ == "__main__":
         language="en", dataflow=df, dimensions=dimensions, params=params
     )
     result = query.data()
-
-    # Print the query result DataFrame
     print(result)
