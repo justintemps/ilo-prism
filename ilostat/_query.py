@@ -156,5 +156,6 @@ if __name__ == "__main__":
     print("dataflow", query.dataflow)
     print("dimensions", query.dimensions)
     print("params", query.params)
+    print("codelist", query.codelist)
 
     print(result)
