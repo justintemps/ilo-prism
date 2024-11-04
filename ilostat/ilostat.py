@@ -7,6 +7,7 @@ from ._initialize import init_db
 from ._validate_db import validate_db
 from ._dimensions import get_dimensions
 from ._query import ILOStatQuery
+from ._get_area_dimensions import filter_area_dimensions
 
 
 from typing import Literal
@@ -160,6 +161,13 @@ class ILOStat:
         - Dimensions data retrieved via the get_dimensions function.
         """
         return get_dimensions(df, self.language)
+
+    def get_area_dimensions(self, area, dataflow):
+        all_dimensions = self.get_dimensions(dataflow)
+        filtered_dimensions = filter_area_dimensions(
+            area=area, all_dimensions=all_dimensions, dataflow=dataflow
+        )
+        return filtered_dimensions
 
     def query(self, dataflow: str, dimensions: dict[str, str], params: dict[str, str]):
         """

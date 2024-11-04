@@ -152,7 +152,9 @@ with gr.Blocks(fill_height=True) as demo:
     dataflows_dropdown.change(set_description, dataflows_dropdown, description_html)
 
     # Event to set dimension details based on selected dataflow
-    dataflows_dropdown.change(set_dimensions, dataflows_dropdown, dimensions)
+    dataflows_dropdown.change(
+        set_dimensions, [areas_dropdown, dataflows_dropdown], dimensions
+    )
 
     dimensions.change(
         init_current_dimensions, inputs=dimensions, outputs=current_dimensions

@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
     # Instantiate and run the query
     query = ILOStatQuery(
-        language="en", dataflow=df, dimensions=dimensions, params=params
+        language="fr", dataflow=df, dimensions=dimensions, params=params
     )
 
     result = query.data()

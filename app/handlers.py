@@ -19,9 +19,9 @@ def set_description(dataflow):
     return description
 
 
-def set_dimensions(dataflow):
+def set_dimensions(area, dataflow):
     if dataflow:
-        dimensions = ilostat.get_dimensions(dataflow)
+        dimensions = ilostat.get_area_dimensions(area=area, dataflow=dataflow)
         return dimensions
     return None
 
