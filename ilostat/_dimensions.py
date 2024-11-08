@@ -15,8 +15,6 @@ def get_dimensions(df: str, lang: str):
 
     dataflow = ilostat.dataflow(df)
 
-    dsd = dataflow.dataflow[df].structure
-
     # Get the constraints
     constraints = dataflow.constraint
 

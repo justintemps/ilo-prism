@@ -169,7 +169,9 @@ class ILOStat:
         )
         return filtered_dimensions
 
-    def query(self, dataflow: str, dimensions: dict[str, str], params: dict[str, str]):
+    def query(
+        self, dataflow: str, dimensions: dict[str, str], params: dict[str, str] = None
+    ):
         """
         Queries the ILOSTAT API based on specified dataflow, dimensions, and parameters.
 

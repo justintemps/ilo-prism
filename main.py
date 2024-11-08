@@ -7,7 +7,6 @@ from app.handlers import (
     init_current_dimensions,
     handle_submit_button,
     get_areas,
-    get_last_20_years,
 )
 
 # ===========================
@@ -29,24 +28,6 @@ dataflows_dropdown = gr.Dropdown(
     label="Select an indicator from ILOSTAT", interactive=False
 )
 
-# Last 20 years
-last_20_years = get_last_20_years()
-
-# Dropdown for starting year
-start_year_dropdown = gr.Dropdown(
-    label="Select a starting year",
-    choices=last_20_years,
-    value=last_20_years[10],
-    interactive=True,
-)
-
-# Dropdown for starting year
-end_year_dropdown = gr.Dropdown(
-    label="Select an ending year",
-    choices=last_20_years,
-    value=last_20_years[-1],
-    interactive=True,
-)
 
 # Button to submit form data
 submit_button = gr.Button("Get data")
@@ -69,6 +50,12 @@ with gr.Blocks(fill_height=True) as demo:
 
     # Dimensions available for the current Dataflow
     dimensions = gr.State(None)
+
+    # The start year for the query
+    start_year = gr.State(None)
+
+    # The end year for the query
+    end_year = gr.State(None)
 
     # The Dimensions currently selected by the user
     current_dimensions = gr.State({})
@@ -94,16 +81,48 @@ with gr.Blocks(fill_height=True) as demo:
             with gr.Row():
                 dataflows_dropdown.render()
 
-            with gr.Row():
-
-                start_year_dropdown.render()
-
-                end_year_dropdown.render()
-
             # Dynamically render dimension dropdowns based on selected dataflow
             @gr.render(inputs=dimensions)
             def render_dimensions(dims):
                 if dims:
+
+                    # First let's get the time period
+                    time_period = next(
+                        (dim for dim in dims if "TIME_PERIOD" in dim["dimension"]),
+                        None,
+                    )
+
+                    # Let's remove it from the other dimensions so we can render it separately
+                    if time_period:
+                        dims.remove(time_period)
+
+                        with gr.Row():
+                            # Dropdown for starting year
+                            start_year_dropdown = gr.Dropdown(
+                                label="Select a starting year",
+                                choices=time_period["values"],
+                                value=time_period["values"][0],
+                                interactive=True,
+                            )
+                            start_year_dropdown.change(
+                                lambda year: year,
+                                inputs=start_year_dropdown,
+                                outputs=start_year,
+                            )
+
+                            # Dropdown for ending year
+                            end_year_dropdown = gr.Dropdown(
+                                label="Select an ending year",
+                                choices=time_period["values"],
+                                value=time_period["values"][-1],
+                                interactive=True,
+                            )
+                            end_year_dropdown.change(
+                                lambda year: year,
+                                inputs=end_year_dropdown,
+                                outputs=end_year,
+                            )
+
                     for dimension in dims:
                         with gr.Row():
                             code, label = dimension["dimension"]
@@ -112,7 +131,10 @@ with gr.Blocks(fill_height=True) as demo:
                             handler = create_dimension_handler(code)
 
                             dimension_dropdown = gr.Dropdown(
-                                label=label, choices=choices, interactive=True
+                                label=label,
+                                choices=choices,
+                                interactive=True,
+                                value=lambda: None,
                             )
 
                             dimension_dropdown.change(
@@ -167,8 +189,8 @@ with gr.Blocks(fill_height=True) as demo:
             areas_dropdown,
             dataflows_dropdown,
             current_dimensions,
-            start_year_dropdown,
-            end_year_dropdown,
+            start_year,
+            end_year,
         ],
         outputs=output_dataframe,
     )

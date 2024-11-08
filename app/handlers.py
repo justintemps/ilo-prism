@@ -52,15 +52,23 @@ def handle_submit_button(
     start_period: str,
     end_period: str,
 ):
-    dimensions["REF_AREA"] = area
-    params = dict(startPeriod=start_period, endPeriod=end_period)
+
+    # Filter out keys with null or empty values from dimensions
+    dimensions = {key: value for key, value in dimensions.items() if value}
+
+    # Only include area if it's not None or empty
+    if area:
+        dimensions["REF_AREA"] = area
+
+    # Exclude keys with null values when creating params
+    params = {
+        key: value
+        for key, value in {"startPeriod": start_period, "endPeriod": end_period}.items()
+        if value
+    }
+
     query = ilostat.query(dataflow=dataflow, dimensions=dimensions, params=params)
 
     result = query.data()
 
     return result
-
-
-def get_last_20_years():
-    current_year = datetime.now().year
-    return [str(year) for year in range(current_year - 20, current_year + 1)]
