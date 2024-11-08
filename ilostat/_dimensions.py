@@ -1,6 +1,14 @@
 import sdmx
 
 
+def dims_with_multi_vals(dimensions: list):
+    filtered_dims = []
+    for dim in dimensions:
+        if len(dim["values"]) > 1:
+            filtered_dims.append(dim)
+    return filtered_dims
+
+
 def get_dimensions(df: str, lang: str):
     # Create an SDMX Client client
     ilostat = sdmx.Client("ILO")
@@ -43,6 +51,11 @@ def get_dimensions(df: str, lang: str):
                     dimension["values"].append(values)
 
                 dimensions.append(dimension)
+
+    # Then get rid of dimensions with only one value. There's no point in showing them
+    # if they don't give the user options to choose from
+    dimensions = dims_with_multi_vals(dimensions)
+
     return dimensions
 
 

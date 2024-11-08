@@ -7,7 +7,7 @@ from ._initialize import init_db
 from ._validate_db import validate_db
 from ._dimensions import get_dimensions
 from ._query import ILOStatQuery
-from ._get_area_dimensions import filter_area_dimensions
+from .area_dimensions import filter_area_dimensions
 
 
 from typing import Literal
