@@ -45,13 +45,15 @@ def create_dimension_handler(code: str):
     return set_current_dimension
 
 
-def handle_submit_button(
+def handle_get_data_button(
     area: str,
     dataflow: str,
     dimensions: dict[str, str],
     start_period: str,
     end_period: str,
 ):
+
+    label = ilostat.get_dataflow_label(dataflow)
 
     # Filter out keys with null or empty values from dimensions
     dimensions = {key: value for key, value in dimensions.items() if value}
@@ -71,4 +73,4 @@ def handle_submit_button(
 
     result = query.data()
 
-    return result
+    return gr.Dataframe(value=result, label=label)

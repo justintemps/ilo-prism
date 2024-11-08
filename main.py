@@ -2,10 +2,9 @@ import gradio as gr
 from app.handlers import (
     create_dimension_handler,
     set_dataflow,
-    set_description,
     set_dimensions,
     init_current_dimensions,
-    handle_submit_button,
+    handle_get_data_button,
     get_areas,
 )
 
@@ -28,25 +27,22 @@ dataflows_dropdown = gr.Dropdown(
     label="Select an indicator from ILOSTAT", interactive=False
 )
 
-
 # Button to submit form data
-submit_button = gr.Button("Get data")
+get_data_button = gr.Button("Get data")
 
-# Line plot for displaying the output
-# TODO: This doesn't work yet because of a bug in Gradio
-# output_lineplot = gr.LinePlot(y="value", x="TIME_PERIOD")
 
 # Text area for displaying the output
-output_dataframe = gr.Dataframe(label="Final output")
+output_dataframe = gr.Dataframe(label="Data will appear here")
 
-# HTML component to display dynamic descriptions
-description_html = gr.HTML()
 
 with gr.Blocks(fill_height=True) as demo:
 
     # ===========================
     # Application State
     # ===========================
+
+    # the current dataflow
+    current_dataflow = gr.State(None)
 
     # Dimensions available for the current Dataflow
     dimensions = gr.State(None)
@@ -123,6 +119,7 @@ with gr.Blocks(fill_height=True) as demo:
                                 outputs=end_year,
                             )
 
+                    # Render the rest of the dimensions
                     for dimension in dims:
                         with gr.Row():
                             code, label = dimension["dimension"]
@@ -144,24 +141,14 @@ with gr.Blocks(fill_height=True) as demo:
                             )
 
             # Render the submit button
-            submit_button.render()
+            get_data_button.render()
 
         # Right column for outputs
         with gr.Column(scale=2):
 
-            # Render the line plot for output display
-            # TODO: This doesn't work yet because of a bug in Gradio
-
-            # with gr.Row():
-            # output_lineplot.render()
-
             # Render text area for output display
             with gr.Row():
                 output_dataframe.render()
-
-            # Render HTML for description display
-            with gr.Row():
-                description_html.render()
 
     # ===========================
     # Component Event Handlers
@@ -169,9 +156,6 @@ with gr.Blocks(fill_height=True) as demo:
 
     # Event to populate dataflows based on selected area
     areas_dropdown.change(set_dataflow, areas_dropdown, dataflows_dropdown)
-
-    # Event to update description based on selected dataflow
-    dataflows_dropdown.change(set_description, dataflows_dropdown, description_html)
 
     # Event to set dimension details based on selected dataflow
     dataflows_dropdown.change(
@@ -183,8 +167,8 @@ with gr.Blocks(fill_height=True) as demo:
     )
 
     # Event to handle submit button click, processing current dimensions and outputting results
-    submit_button.click(
-        handle_submit_button,
+    get_data_button.click(
+        handle_get_data_button,
         inputs=[
             areas_dropdown,
             dataflows_dropdown,
@@ -194,10 +178,6 @@ with gr.Blocks(fill_height=True) as demo:
         ],
         outputs=output_dataframe,
     )
-
-    # Event to initialize the current dimensions whenever dimensions change
-    # TODO: This doesn't work yet because of a bug in Gradio
-    # output_dataframe.change(lambda x: x, output_dataframe, output_lineplot)
 
 
 # ===========================

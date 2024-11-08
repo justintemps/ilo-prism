@@ -124,6 +124,33 @@ class ILOStat:
         finally:
             cursor.close()  # Ensure cursor is closed
 
+    def get_dataflow_label(self, dataflow: str):
+        """
+        Retrieves the label for a specified dataflow in a given language.
+
+        Parameters:
+        - dataflow (str): The code of the dataflow to retrieve the label for.
+
+        Returns:
+        - str: The label of the dataflow, if found.
+        """
+        cursor = self.__con.cursor()
+        try:
+            cursor.execute(
+                """
+                SELECT dn.name
+                FROM dataflow AS d
+                JOIN dataflow_name AS dn ON d.dataflow_uid = dn.dataflow_uid
+                JOIN language AS l ON dn.language_uid = l.language_uid
+                WHERE d.code = ? AND l.code = ?
+                """,
+                (dataflow, self.language),
+            )
+            result = cursor.fetchone()
+            return result[0] if result else None  # Return the label if found, else None
+        finally:
+            cursor.close()  # Ensure cursor is closed
+
     def get_dataflow_description(self, dataflow: str):
         """
         Retrieves the description for a specified dataflow.
