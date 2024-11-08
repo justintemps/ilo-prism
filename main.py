@@ -8,6 +8,9 @@ from app.handlers import (
     get_areas,
 )
 
+import pandas as pd
+from random import randint, random
+
 # ===========================
 # App Components
 # ===========================
@@ -33,6 +36,8 @@ get_data_button = gr.Button("Get data")
 
 # Text area for displaying the output
 output_dataframe = gr.Dataframe(label="Data will appear here")
+
+output_plot = gr.LinePlot()
 
 
 with gr.Blocks(fill_height=True) as demo:
@@ -118,8 +123,10 @@ with gr.Blocks(fill_height=True) as demo:
                                 inputs=end_year_dropdown,
                                 outputs=end_year,
                             )
+                    with gr.Row():
+                        # Render the rest of the dimensions
+                        gr.Markdown("## Apply filters")
 
-                    # Render the rest of the dimensions
                     for dimension in dims:
                         with gr.Row():
                             code, label = dimension["dimension"]
@@ -146,9 +153,22 @@ with gr.Blocks(fill_height=True) as demo:
         # Right column for outputs
         with gr.Column(scale=2):
 
-            # Render text area for output display
-            with gr.Row():
-                output_dataframe.render()
+            with gr.Tab("Summary"):
+
+                with gr.Row():
+
+                    @gr.render(inputs=output_dataframe)
+                    def render_chart(df):
+                        if not df.empty and not df.isnull().all().all():
+                            output_plot = gr.LinePlot(
+                                df, x="TIME_PERIOD", y="value", scale=2
+                            )
+
+            with gr.Tab("Data"):
+
+                # Render text area for output display
+                with gr.Row():
+                    output_dataframe.render()
 
     # ===========================
     # Component Event Handlers
