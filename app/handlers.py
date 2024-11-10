@@ -10,7 +10,7 @@ def get_areas():
 def set_dataflow(area):
     if area:
         dataflows = ilostat.get_dataflows(area)
-        return gr.Dropdown(choices=dataflows, value=dataflows[0][1], interactive=True)
+        return gr.Dropdown(choices=dataflows, interactive=True)
     return None
 
 
@@ -48,12 +48,11 @@ def create_dimension_handler(code: str):
 def handle_get_data_button(
     area: str,
     dataflow: str,
+    dataflow_label: str,
     dimensions: dict[str, str],
     start_period: str,
     end_period: str,
 ):
-
-    label = ilostat.get_dataflow_label(dataflow)
 
     # Filter out keys with null or empty values from dimensions
     dimensions = {key: value for key, value in dimensions.items() if value}
@@ -73,4 +72,17 @@ def handle_get_data_button(
 
     result = query.data()
 
-    return gr.Dataframe(value=result, label=label)
+    return gr.Dataframe(value=result, label=dataflow_label)
+
+
+def update_dataflow_label(dataflow: str):
+    label = ilostat.get_dataflow_label(dataflow)
+    return label
+
+
+def render_chart(dataframe: any, dataflow_label: str):
+
+    if not dataframe.empty and not dataframe.isnull().all().all():
+        gr.LinePlot(
+            dataframe, x="TIME_PERIOD", y="value", scale=2, label=dataflow_label
+        )

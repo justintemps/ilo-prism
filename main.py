@@ -6,10 +6,9 @@ from app.handlers import (
     init_current_dimensions,
     handle_get_data_button,
     get_areas,
+    update_dataflow_label,
+    render_chart,
 )
-
-import pandas as pd
-from random import randint, random
 
 # ===========================
 # App Components
@@ -37,8 +36,6 @@ get_data_button = gr.Button("Get data")
 # Text area for displaying the output
 output_dataframe = gr.Dataframe(label="Data will appear here")
 
-output_plot = gr.LinePlot()
-
 
 with gr.Blocks(fill_height=True) as demo:
 
@@ -46,8 +43,8 @@ with gr.Blocks(fill_height=True) as demo:
     # Application State
     # ===========================
 
-    # the current dataflow
-    current_dataflow = gr.State(None)
+    # dataflow label
+    dataflow_label = gr.State(None)
 
     # Dimensions available for the current Dataflow
     dimensions = gr.State(None)
@@ -85,7 +82,12 @@ with gr.Blocks(fill_height=True) as demo:
             # Dynamically render dimension dropdowns based on selected dataflow
             @gr.render(inputs=dimensions)
             def render_dimensions(dims):
+
                 if dims:
+
+                    with gr.Row():
+                        # Render the rest of the dimensions
+                        gr.Markdown("## Apply filters")
 
                     # First let's get the time period
                     time_period = next(
@@ -123,9 +125,6 @@ with gr.Blocks(fill_height=True) as demo:
                                 inputs=end_year_dropdown,
                                 outputs=end_year,
                             )
-                    with gr.Row():
-                        # Render the rest of the dimensions
-                        gr.Markdown("## Apply filters")
 
                     for dimension in dims:
                         with gr.Row():
@@ -153,22 +152,19 @@ with gr.Blocks(fill_height=True) as demo:
         # Right column for outputs
         with gr.Column(scale=2):
 
-            with gr.Tab("Summary"):
-
-                with gr.Row():
-
-                    @gr.render(inputs=output_dataframe)
-                    def render_chart(df):
-                        if not df.empty and not df.isnull().all().all():
-                            output_plot = gr.LinePlot(
-                                df, x="TIME_PERIOD", y="value", scale=2
-                            )
-
             with gr.Tab("Data"):
 
                 # Render text area for output display
                 with gr.Row():
                     output_dataframe.render()
+
+            with gr.Tab("Chart"):
+
+                with gr.Row():
+
+                    @gr.render(inputs=[output_dataframe, dataflow_label])
+                    def render_vis(dataframe, dataflow_label):
+                        render_chart(dataframe, dataflow_label)
 
     # ===========================
     # Component Event Handlers
@@ -192,11 +188,17 @@ with gr.Blocks(fill_height=True) as demo:
         inputs=[
             areas_dropdown,
             dataflows_dropdown,
+            dataflow_label,
             current_dimensions,
             start_year,
             end_year,
         ],
         outputs=output_dataframe,
+    )
+
+    # Update the dataflow label but only when the dataframe is updated
+    output_dataframe.change(
+        update_dataflow_label, inputs=dataflows_dropdown, outputs=dataflow_label
     )
 
 
