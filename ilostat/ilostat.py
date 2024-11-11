@@ -94,6 +94,26 @@ class ILOStat:
             cursor.close()  # Ensure cursor is closed
         return results
 
+    def get_area_label(self, area):
+        """Retrieves the label of an area based on the code"""
+        cursor = self.__con.cursor()
+        try:
+            cursor.execute(
+                """
+                SELECT cn.name
+                FROM cl_area AS ca
+                JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
+                JOIN language AS l ON cn.language_uid = l.language_uid
+                WHERE l.code = ? AND ca.code = ?;
+                """,
+                (self.language, area),
+            )
+            results = cursor.fetchone()
+            return results[0] if results else None
+        finally:
+            cursor.close()  # Ensure cursor is closed
+        return results
+
     def get_dataflows(self, country: str):
         """
         Retrieves available dataflows for a specified country.
@@ -221,5 +241,10 @@ class ILOStat:
 if __name__ == "__main__":
     # Example usage of the ILOStat class
     ilostat = ILOStat("en")
-    dataflows = ilostat.get_dataflows("FRA")
+    country = "FRA"
+
+    dataflows = ilostat.get_dataflows(country)
+    label = ilostat.get_area_label(country)
+
+    print(label)
     print(dataflows)

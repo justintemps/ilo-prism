@@ -3,10 +3,12 @@ from datetime import datetime
 from . import ilostat
 
 
+# Function to retrieve available areas
 def get_areas():
     return ilostat.get_areas()
 
 
+# Function to set the dataflow dropdown based on the selected area
 def set_dataflow(area):
     if area:
         dataflows = ilostat.get_dataflows(area)
@@ -14,11 +16,13 @@ def set_dataflow(area):
     return None
 
 
+# Function to get and set a description for a dataflow
 def set_description(dataflow):
     description = ilostat.get_dataflow_description(dataflow)
     return description
 
 
+# Function to retrieve dimensions for a given area and dataflow
 def set_dimensions(area, dataflow):
     if dataflow:
         dimensions = ilostat.get_area_dimensions(area=area, dataflow=dataflow)
@@ -26,17 +30,20 @@ def set_dimensions(area, dataflow):
     return None
 
 
+# Function to initialize current dimensions from a list of dimension data
 def init_current_dimensions(dims):
     dimensions = {}
     if dims:
         for dimension in dims:
-            code, _ = dimension["dimension"]
-            first_option = dimension["values"][0][1]
+            code, _ = dimension["dimension"]  # Extract the dimension code
+            first_option = dimension["values"][0][1]  # Get the first available value
             dimensions[code] = first_option
     return dimensions
 
 
+# Function factory to create a handler for updating dimensions
 def create_dimension_handler(code: str):
+    # Function to set a new value for a specific dimension
     def set_current_dimension(current_dims: dict, new_dim: str):
         new_dims = current_dims
         new_dims[code] = new_dim
@@ -45,15 +52,14 @@ def create_dimension_handler(code: str):
     return set_current_dimension
 
 
+# Function to handle fetching data based on selected parameters
 def handle_get_data_button(
     area: str,
     dataflow: str,
-    dataflow_label: str,
     dimensions: dict[str, str],
     start_period: str,
     end_period: str,
 ):
-
     # Filter out keys with null or empty values from dimensions
     dimensions = {key: value for key, value in dimensions.items() if value}
 
@@ -68,21 +74,29 @@ def handle_get_data_button(
         if value
     }
 
+    # Execute the query with the specified parameters
     query = ilostat.query(dataflow=dataflow, dimensions=dimensions, params=params)
-
     result = query.data()
 
-    return gr.Dataframe(value=result, label=dataflow_label)
+    return result
 
 
-def update_dataflow_label(dataflow: str):
-    label = ilostat.get_dataflow_label(dataflow)
-    return label
+# Function to update the label for a dataflow
+def update_dataflow_label(area: str, dataflow: str):
+    dataflow_label = ilostat.get_dataflow_label(dataflow)
+    area_label = ilostat.get_area_label(area)
 
+    placeholder = """
+    ## Geographic region
+    ### ILOSTAT Indicator
+    """
 
-def render_chart(dataframe: any, dataflow_label: str):
+    label = f"""
+    ## {area_label}
+    ### {dataflow_label}
+    """
 
-    if not dataframe.empty and not dataframe.isnull().all().all():
-        gr.LinePlot(
-            dataframe, x="TIME_PERIOD", y="value", scale=2, label=dataflow_label
-        )
+    if area and dataflow:
+        return label
+
+    return placeholder
