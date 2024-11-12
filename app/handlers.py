@@ -1,11 +1,27 @@
 import gradio as gr
-from . import ilostat
+from . import ilostat, default_area, default_dataflow
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
 # Set pandas options to avoid silent downcasting
 pd.set_option("future.no_silent_downcasting", True)
+
+
+def get_default_area():
+    return default_area
+
+
+def get_default_dataflows():
+    return ilostat.get_dataflows(default_area)
+
+
+def get_default_dataflow():
+    return default_dataflow
+
+
+def get_default_dimensions():
+    return ilostat.get_area_dimensions(default_area, default_dataflow)
 
 
 # Function to retrieve available areas
@@ -17,7 +33,7 @@ def get_areas():
 def set_dataflow(area):
     if area:
         dataflows = ilostat.get_dataflows(area)
-        return gr.Dropdown(choices=dataflows, interactive=True)
+        return gr.Dropdown(choices=dataflows)
     return None
 
 

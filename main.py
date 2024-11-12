@@ -1,5 +1,9 @@
 import gradio as gr
 from app.handlers import (
+    get_default_area,
+    get_default_dataflows,
+    get_default_dataflow,
+    get_default_dimensions,
     create_dimension_handler,
     set_dataflow,
     set_dimensions,
@@ -9,6 +13,7 @@ from app.handlers import (
     render_chart,
 )
 import pandas as pd
+
 
 # ===========================
 # App Components
@@ -20,12 +25,14 @@ title = gr.Markdown("# Summarize a table from ILOSTAT")
 # Dropdown for geographic regions with dynamic choices
 ilostat_areas = get_areas()
 areas_dropdown = gr.Dropdown(
-    choices=ilostat_areas, label="Select a geographic region", value=lambda: None
+    choices=ilostat_areas, label="Select a geographic region", value=get_default_area()
 )
 
 # Dropdown for dataflows (indicators) initialized as inactive
 dataflows_dropdown = gr.Dropdown(
-    label="Select an indicator from ILOSTAT", interactive=False
+    label="Select an indicator from ILOSTAT",
+    choices=get_default_dataflows(),
+    value=get_default_dataflow(),
 )
 
 dataflow_title = gr.Markdown("Choose a country")
@@ -33,7 +40,7 @@ dataflow_title = gr.Markdown("Choose a country")
 dataflow_label = gr.Markdown("Choose an indicator")
 
 # Output dataframe
-output_dataframe = gr.DataFrame(value=lambda: None)
+output_dataframe = gr.DataFrame(label="bullshit", value=lambda: None)
 
 
 # Button to submit form data
@@ -46,8 +53,10 @@ with gr.Blocks(fill_height=True) as demo:
     # Application State
     # ===========================
 
+    default_dimensions = get_default_dimensions()
+
     # Dimensions available for the current Dataflow
-    dimensions = gr.State(None)
+    dimensions = gr.State(default_dimensions)
 
     # The start year for the query
     start_year = gr.State(None)
@@ -85,7 +94,7 @@ with gr.Blocks(fill_height=True) as demo:
 
                 if dims:
 
-                    gr.Markdown("## Add filters")
+                    gr.Markdown("## 🎛️ Add filters")
 
                     with gr.Group():
 
