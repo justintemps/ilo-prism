@@ -150,7 +150,6 @@ with gr.Blocks(fill_height=True) as demo:
                                 label=label,
                                 choices=choices,
                                 interactive=True,
-                                value=lambda: None,
                             )
 
                             dimension_dropdown.change(
@@ -193,6 +192,8 @@ with gr.Blocks(fill_height=True) as demo:
     )
 
     # Initialize current dimensions when dimensions change
+    # @TODO: This needs to be refactored to set the state to the first value of each dimension
+    # like it was before
     dimensions.change(lambda: {}, outputs=current_dimensions)
 
     # Event to handle submit button click, processing current dimensions and outputting results
