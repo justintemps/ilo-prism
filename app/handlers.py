@@ -1,6 +1,11 @@
 import gradio as gr
-from datetime import datetime
 from . import ilostat
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Set pandas options to avoid silent downcasting
+pd.set_option("future.no_silent_downcasting", True)
 
 
 # Function to retrieve available areas
@@ -28,17 +33,6 @@ def set_dimensions(area, dataflow):
         dimensions = ilostat.get_area_dimensions(area=area, dataflow=dataflow)
         return dimensions
     return None
-
-
-# Function to initialize current dimensions from a list of dimension data
-def init_current_dimensions(dims):
-    dimensions = {}
-    if dims:
-        for dimension in dims:
-            code, _ = dimension["dimension"]  # Extract the dimension code
-            first_option = dimension["values"][0][1]  # Get the first available value
-            dimensions[code] = first_option
-    return dimensions
 
 
 # Function factory to create a handler for updating dimensions
@@ -100,3 +94,35 @@ def update_dataflow_label(area: str, dataflow: str):
         return label
 
     return placeholder
+
+
+def render_chart(df: pd.DataFrame):
+    if "value" in df.columns:
+
+        df["value"] = df["value"].replace("", np.nan, regex=False)
+        fig = plt.figure()
+
+        plt.xlabel("Time period")
+        plt.ylabel(df["Measure"].iloc[0])
+
+        classifications = [col for col in df.columns if "classif" in col.lower()]
+        for classification in classifications:
+            for group_name, group_df in df.groupby(classification):
+                plt.plot(group_df["TIME_PERIOD"], group_df["value"], label=group_name)
+
+        # Fix layout
+        fig.autofmt_xdate()
+
+        # Create the plot object before closing
+        plot = gr.Plot(value=fig)
+
+        # Close the figure after creating the plot object
+        plt.close(fig)
+
+        return plot
+
+
+"""
+Italy
+Unemployment by sex, education and marital status
+"""

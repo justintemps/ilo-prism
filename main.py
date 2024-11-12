@@ -1,5 +1,4 @@
 import gradio as gr
-import pandas as pd
 from app.handlers import (
     create_dimension_handler,
     set_dataflow,
@@ -7,7 +6,9 @@ from app.handlers import (
     handle_get_data_button,
     get_areas,
     update_dataflow_label,
+    render_chart,
 )
+import pandas as pd
 
 # ===========================
 # App Components
@@ -32,7 +33,7 @@ dataflow_title = gr.Markdown("Choose a country")
 dataflow_label = gr.Markdown("Choose an indicator")
 
 # Output dataframe
-output_dataframe = gr.DataFrame()
+output_dataframe = gr.DataFrame(value=lambda: None)
 
 
 # Button to submit form data
@@ -78,6 +79,7 @@ with gr.Blocks(fill_height=True) as demo:
                 dataflows_dropdown.render()
 
             # Dynamically render dimension dropdowns based on selected dataflow
+
             @gr.render(inputs=dimensions)
             def render_dimensions(dims):
 
@@ -85,70 +87,68 @@ with gr.Blocks(fill_height=True) as demo:
 
                     gr.Markdown("## Add filters")
 
-                    with gr.Row():
+                    with gr.Group():
 
-                        with gr.Group():
+                        with gr.Row():
 
-                            with gr.Row():
+                            # First let's get the time period
+                            time_period = next(
+                                (
+                                    dim
+                                    for dim in dims
+                                    if "TIME_PERIOD" in dim["dimension"]
+                                ),
+                                None,
+                            )
 
-                                # First let's get the time period
-                                time_period = next(
-                                    (
-                                        dim
-                                        for dim in dims
-                                        if "TIME_PERIOD" in dim["dimension"]
-                                    ),
-                                    None,
-                                )
+                            # Let's remove it from the other dimensions so we can render it separately
+                            if time_period:
+                                dims.remove(time_period)
 
-                                # Let's remove it from the other dimensions so we can render it separately
-                                if time_period:
-                                    dims.remove(time_period)
-
-                                    # Dropdown for starting year
-                                    start_year_dropdown = gr.Dropdown(
-                                        label="Starting year",
-                                        choices=time_period["values"],
-                                        value=time_period["values"][0],
-                                        interactive=True,
-                                    )
-                                    start_year_dropdown.change(
-                                        lambda year: year,
-                                        inputs=start_year_dropdown,
-                                        outputs=start_year,
-                                    )
-
-                                    # Dropdown for ending year
-                                    end_year_dropdown = gr.Dropdown(
-                                        label="Ending year",
-                                        choices=time_period["values"],
-                                        value=time_period["values"][-1],
-                                        interactive=True,
-                                    )
-                                    end_year_dropdown.change(
-                                        lambda year: year,
-                                        inputs=end_year_dropdown,
-                                        outputs=end_year,
-                                    )
-
-                            for dimension in dims:
-                                code, label = dimension["dimension"]
-                                choices = dimension["values"]
-
-                                handler = create_dimension_handler(code)
-
-                                dimension_dropdown = gr.Dropdown(
-                                    label=label,
-                                    choices=choices,
+                                # Dropdown for starting year
+                                start_year_dropdown = gr.Dropdown(
+                                    label="Starting year",
+                                    choices=time_period["values"],
+                                    value=time_period["values"][0],
                                     interactive=True,
-                                    value=lambda: None,
+                                )
+                                start_year_dropdown.change(
+                                    lambda year: year,
+                                    inputs=start_year_dropdown,
+                                    outputs=start_year,
                                 )
 
-                                dimension_dropdown.change(
-                                    handler,
-                                    inputs=[current_dimensions, dimension_dropdown],
-                                    outputs=current_dimensions,
+                                # Dropdown for ending year
+                                end_year_dropdown = gr.Dropdown(
+                                    label="Ending year",
+                                    choices=time_period["values"],
+                                    value=time_period["values"][-1],
+                                    interactive=True,
                                 )
+                                end_year_dropdown.change(
+                                    lambda year: year,
+                                    inputs=end_year_dropdown,
+                                    outputs=end_year,
+                                )
+
+                        for dimension in dims:
+                            code, label = dimension["dimension"]
+                            choices = dimension["values"]
+
+                            handler = create_dimension_handler(code)
+
+                            dimension_dropdown = gr.Dropdown(
+                                label=label,
+                                choices=choices,
+                                interactive=True,
+                                value=lambda: None,
+                            )
+
+                            dimension_dropdown.change(
+                                handler,
+                                inputs=[current_dimensions, dimension_dropdown],
+                                outputs=current_dimensions,
+                            )
 
             # Render the submit button
             get_data_button.render()
@@ -159,19 +159,17 @@ with gr.Blocks(fill_height=True) as demo:
             dataflow_label.render()
 
             with gr.Tab("Data"):
-                with gr.Row():
-                    output_dataframe.render()
+                output_dataframe.render()
 
             with gr.Tab("Chart"):
-                with gr.Row():
+                initial_value = pd.DataFrame()
+                output_chart = gr.Plot()
 
-                    @gr.render(inputs=output_dataframe)
-                    def render_chart(dataframe):
-                        gr.LinePlot(
-                            dataframe,
-                            x="TIME_PERIOD",
-                            y="value",
-                        )
+                output_dataframe.change(
+                    render_chart,
+                    inputs=output_dataframe,
+                    outputs=output_chart,
+                )
 
     # ===========================
     # Component Event Handlers
@@ -185,7 +183,7 @@ with gr.Blocks(fill_height=True) as demo:
         set_dimensions, [areas_dropdown, dataflows_dropdown], dimensions
     )
 
-    # Zap the currently selected dimensions when the set of dimensions changes
+    # Initialize current dimensions when dimensions change
     dimensions.change(lambda: {}, outputs=current_dimensions)
 
     # Event to handle submit button click, processing current dimensions and outputting results
