@@ -174,6 +174,10 @@ with gr.Blocks(fill_height=True) as demo:
                     outputs=output_chart,
                 )
 
+            with gr.Tab("Summary"):
+                gr.TextArea("Summary")
+                gr.Button("Generate summary")
+
     # ===========================
     # Component Event Handlers
     # ===========================
