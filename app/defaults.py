@@ -1,8 +1,8 @@
 from . import ilostat, default_area, default_dataflow
-from .handlers import init_current_dimensions, handle_get_data_button
+from .controller import AppController
 
 
-class DefaultSettings:
+class AppDefaults:
     """
     The DefaultSettings class encapsulates the initialization and configuration
     of data flows, dimensions, and related settings for a specified area
@@ -31,6 +31,9 @@ class DefaultSettings:
         # Private attribute for the area
         self._area = area
 
+        # Fetch the full list of areas
+        self._areas = ilostat.get_areas()
+
         # Dataflow for the specified area
         self._dataflow = dataflow
 
@@ -40,11 +43,14 @@ class DefaultSettings:
         # Retrieve dimensions for the specified area and dataflow
         self._dimensions = ilostat.get_area_dimensions(area, dataflow)
 
+        # Instantiate a controller so we can use some of its methods to set defaults
+        self._ctrl = AppController()
+
         # Initialize dimensions for current usage context
-        self._current_dimensions = init_current_dimensions(self._dimensions)
+        self._current_dimensions = self._ctrl.init_current_dimensions(self._dimensions)
 
         # Handle data retrieval or preparation using a specific handler
-        self._data = handle_get_data_button(
+        self._dataframe = self._ctrl.set_dataframe(
             area, dataflow, self._current_dimensions, None, None
         )
 
@@ -57,6 +63,16 @@ class DefaultSettings:
             str: The area value.
         """
         return self._area
+
+    @property
+    def areas(self):
+        """
+        Returns the area associated with the current settings.
+
+        Returns:
+            str: The area value.
+        """
+        return self._areas
 
     @property
     def dataflow(self):
@@ -99,22 +115,22 @@ class DefaultSettings:
         return self._current_dimensions
 
     @property
-    def data(self):
+    def dataframe(self):
         """
         Returns the data associated with the current configuration.
 
         Returns:
             any: The data object handled and retrieved during initialization.
         """
-        return self._data
+        return self._dataframe
 
 
 if __name__ == "__main__":
-    initial = DefaultSettings()
+    initial = AppDefaults()
 
     print("Initial area", initial.area)
     print("Initial dataflow", initial.dataflow)
     print("Number of dataflows", len(initial.dataflows))
     print("Dimensions", initial.dimensions)
     print("Current dimensions", initial.current_dimensions)
-    print("Data", initial.data)
+    print("Data", initial.dataframe)

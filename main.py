@@ -1,22 +1,14 @@
 import gradio as gr
-from app.defaults import DefaultSettings
-from app.handlers import (
-    create_dimension_handler,
-    set_dataflow,
-    set_dimensions,
-    handle_get_data_button,
-    get_areas,
-    update_dataflow_label,
-    render_chart,
-    init_current_dimensions,
-)
-import pandas as pd
+from app.defaults import AppDefaults
+from app.controller import AppController
 
 # ===========================
-# Initialize defaults
+# Conroller & Default Classes
 # ===========================
 
-initial = DefaultSettings()
+control = AppController()
+
+initial = AppDefaults()
 
 # ===========================
 # App Components
@@ -26,16 +18,15 @@ initial = DefaultSettings()
 title = gr.Markdown("# Summarize a table from ILOSTAT")
 
 # Dropdown for geographic regions with dynamic choices
-ilostat_areas = get_areas()
 areas_dropdown = gr.Dropdown(
-    choices=ilostat_areas, label="Select a geographic region", value=initial.area
+    label="Select a geographic region", choices=initial.areas, value=initial.area
 )
 
 # Dropdown for dataflows (indicators) initialized as inactive
 dataflows_dropdown = gr.Dropdown(
     label="Select an indicator from ILOSTAT",
-    value=initial.dataflow,
     choices=initial.dataflows,
+    value=initial.dataflow,
 )
 
 dataflow_title = gr.Markdown("Choose a country")
@@ -44,7 +35,7 @@ dataflow_label = gr.Markdown("Choose an indicator")
 
 
 # Output dataframe
-output_dataframe = gr.DataFrame(value=initial.data)
+output_dataframe = gr.DataFrame(value=initial.dataframe)
 
 
 # Button to submit form data
@@ -148,7 +139,8 @@ with gr.Blocks(fill_height=True) as demo:
                             code, label = dimension["dimension"]
                             choices = dimension["values"]
 
-                            handler = create_dimension_handler(code)
+                            # handler = create_dimension_handler(code)
+                            dimension_controller = control.dimension_controller(code)
 
                             dimension_dropdown = gr.Dropdown(
                                 label=label,
@@ -157,7 +149,7 @@ with gr.Blocks(fill_height=True) as demo:
                             )
 
                             dimension_dropdown.change(
-                                handler,
+                                dimension_controller.update,
                                 inputs=[current_dimensions, dimension_dropdown],
                                 outputs=current_dimensions,
                             )
@@ -177,7 +169,7 @@ with gr.Blocks(fill_height=True) as demo:
                 output_chart = gr.Plot()
 
                 output_dataframe.change(
-                    render_chart,
+                    control.set_chart,
                     inputs=output_dataframe,
                     outputs=output_chart,
                 )
@@ -187,21 +179,21 @@ with gr.Blocks(fill_height=True) as demo:
     # ===========================
 
     # Event to populate dataflows based on selected area
-    areas_dropdown.change(set_dataflow, areas_dropdown, dataflows_dropdown)
+    areas_dropdown.change(control.set_dataflows, areas_dropdown, dataflows_dropdown)
 
     # Event to set dimension details based on selected dataflow
     dataflows_dropdown.input(
-        set_dimensions, [areas_dropdown, dataflows_dropdown], dimensions
+        control.set_dimensions, [areas_dropdown, dataflows_dropdown], dimensions
     )
 
     # Initialize current dimensions when dimensions change
     dimensions.change(
-        init_current_dimensions, inputs=dimensions, outputs=current_dimensions
+        control.init_current_dimensions, inputs=dimensions, outputs=current_dimensions
     )
 
     # Event to handle submit button click, processing current dimensions and outputting results
     get_data_button.click(
-        handle_get_data_button,
+        control.set_dataframe,
         inputs=[
             areas_dropdown,
             dataflows_dropdown,
@@ -214,7 +206,7 @@ with gr.Blocks(fill_height=True) as demo:
 
     # Update the dataflow label but only when the dataframe is updated
     output_dataframe.change(
-        update_dataflow_label,
+        control.set_dataflow_label,
         inputs=[areas_dropdown, dataflows_dropdown],
         outputs=dataflow_label,
     )
