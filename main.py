@@ -1,9 +1,6 @@
 import gradio as gr
+from app.defaults import DefaultSettings
 from app.handlers import (
-    get_default_area,
-    get_default_dataflows,
-    get_default_dataflow,
-    get_default_dimensions,
     create_dimension_handler,
     set_dataflow,
     set_dimensions,
@@ -16,17 +13,10 @@ from app.handlers import (
 import pandas as pd
 
 # ===========================
-# Set up defaults
+# Initialize defaults
 # ===========================
 
-default_area = get_default_area()
-default_dataflows = get_default_dataflows()
-default_dataflow = get_default_dataflow()
-default_dimensions = get_default_dimensions()
-default_current_dimensions = init_current_dimensions(default_dimensions)
-default_data = handle_get_data_button(
-    default_area, default_dataflow, default_current_dimensions, None, None
-)
+initial = DefaultSettings()
 
 # ===========================
 # App Components
@@ -38,14 +28,14 @@ title = gr.Markdown("# Summarize a table from ILOSTAT")
 # Dropdown for geographic regions with dynamic choices
 ilostat_areas = get_areas()
 areas_dropdown = gr.Dropdown(
-    choices=ilostat_areas, label="Select a geographic region", value=default_area
+    choices=ilostat_areas, label="Select a geographic region", value=initial.area
 )
 
 # Dropdown for dataflows (indicators) initialized as inactive
 dataflows_dropdown = gr.Dropdown(
     label="Select an indicator from ILOSTAT",
-    choices=default_dataflows,
-    value=default_dataflow,
+    value=initial.dataflow,
+    choices=initial.dataflows,
 )
 
 dataflow_title = gr.Markdown("Choose a country")
@@ -54,7 +44,7 @@ dataflow_label = gr.Markdown("Choose an indicator")
 
 
 # Output dataframe
-output_dataframe = gr.DataFrame(value=default_data)
+output_dataframe = gr.DataFrame(value=initial.data)
 
 
 # Button to submit form data
@@ -68,7 +58,7 @@ with gr.Blocks(fill_height=True) as demo:
     # ===========================
 
     # Dimensions available for the current Dataflow
-    dimensions = gr.State(default_dimensions)
+    dimensions = gr.State(initial.dimensions)
 
     # The start year for the query
     start_year = gr.State(None)
@@ -77,7 +67,7 @@ with gr.Blocks(fill_height=True) as demo:
     end_year = gr.State(None)
 
     # The Dimensions currently selected by the user
-    current_dimensions = gr.State(default_current_dimensions)
+    current_dimensions = gr.State(initial.current_dimensions)
 
     # ===========================
     # App Rendering Section
@@ -184,7 +174,6 @@ with gr.Blocks(fill_height=True) as demo:
                 output_dataframe.render()
 
             with gr.Tab("Chart"):
-                initial_value = pd.DataFrame()
                 output_chart = gr.Plot()
 
                 output_dataframe.change(

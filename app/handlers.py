@@ -8,22 +8,6 @@ import numpy as np
 pd.set_option("future.no_silent_downcasting", True)
 
 
-def get_default_area():
-    return default_area
-
-
-def get_default_dataflows():
-    return ilostat.get_dataflows(default_area)
-
-
-def get_default_dataflow():
-    return default_dataflow
-
-
-def get_default_dimensions():
-    return ilostat.get_area_dimensions(default_area, default_dataflow)
-
-
 # Function to retrieve available areas
 def get_areas():
     return ilostat.get_areas()
