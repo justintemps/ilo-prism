@@ -62,6 +62,15 @@ def create_dimension_handler(code: str):
     return set_current_dimension
 
 
+def init_current_dimensions(dimensions):
+    current_dimensions = {}
+    for dim in dimensions:
+        key = dim["dimension"][0]
+        val = dim["values"][0][1]
+        current_dimensions[key] = val
+    return current_dimensions
+
+
 # Function to handle fetching data based on selected parameters
 def handle_get_data_button(
     area: str,

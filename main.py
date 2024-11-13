@@ -11,9 +11,22 @@ from app.handlers import (
     get_areas,
     update_dataflow_label,
     render_chart,
+    init_current_dimensions,
 )
 import pandas as pd
 
+# ===========================
+# Set up defaults
+# ===========================
+
+default_area = get_default_area()
+default_dataflows = get_default_dataflows()
+default_dataflow = get_default_dataflow()
+default_dimensions = get_default_dimensions()
+default_current_dimensions = init_current_dimensions(default_dimensions)
+default_data = handle_get_data_button(
+    default_area, default_dataflow, default_current_dimensions, None, None
+)
 
 # ===========================
 # App Components
@@ -25,26 +38,27 @@ title = gr.Markdown("# Summarize a table from ILOSTAT")
 # Dropdown for geographic regions with dynamic choices
 ilostat_areas = get_areas()
 areas_dropdown = gr.Dropdown(
-    choices=ilostat_areas, label="Select a geographic region", value=get_default_area()
+    choices=ilostat_areas, label="Select a geographic region", value=default_area
 )
 
 # Dropdown for dataflows (indicators) initialized as inactive
 dataflows_dropdown = gr.Dropdown(
     label="Select an indicator from ILOSTAT",
-    choices=get_default_dataflows(),
-    value=get_default_dataflow(),
+    choices=default_dataflows,
+    value=default_dataflow,
 )
 
 dataflow_title = gr.Markdown("Choose a country")
 
 dataflow_label = gr.Markdown("Choose an indicator")
 
+
 # Output dataframe
-output_dataframe = gr.DataFrame(label="bullshit", value=lambda: None)
+output_dataframe = gr.DataFrame(value=default_data)
 
 
 # Button to submit form data
-get_data_button = gr.Button("Get data")
+get_data_button = gr.Button("Update data")
 
 
 with gr.Blocks(fill_height=True) as demo:
@@ -52,8 +66,6 @@ with gr.Blocks(fill_height=True) as demo:
     # ===========================
     # Application State
     # ===========================
-
-    default_dimensions = get_default_dimensions()
 
     # Dimensions available for the current Dataflow
     dimensions = gr.State(default_dimensions)
@@ -65,7 +77,7 @@ with gr.Blocks(fill_height=True) as demo:
     end_year = gr.State(None)
 
     # The Dimensions currently selected by the user
-    current_dimensions = gr.State({})
+    current_dimensions = gr.State(default_current_dimensions)
 
     # ===========================
     # App Rendering Section
@@ -78,6 +90,8 @@ with gr.Blocks(fill_height=True) as demo:
 
         # Left column for inputs
         with gr.Column():
+
+            gr.Markdown("## 🌍 Select a region and dataflow")
 
             # Render dropdown for area selection
             with gr.Row():
@@ -94,7 +108,7 @@ with gr.Blocks(fill_height=True) as demo:
 
                 if dims:
 
-                    gr.Markdown("## 🎛️ Add filters")
+                    gr.Markdown("## 🔦 Filter the data")
 
                     with gr.Group():
 
@@ -192,9 +206,9 @@ with gr.Blocks(fill_height=True) as demo:
     )
 
     # Initialize current dimensions when dimensions change
-    # @TODO: This needs to be refactored to set the state to the first value of each dimension
-    # like it was before
-    dimensions.change(lambda: {}, outputs=current_dimensions)
+    dimensions.change(
+        init_current_dimensions, inputs=dimensions, outputs=current_dimensions
+    )
 
     # Event to handle submit button click, processing current dimensions and outputting results
     get_data_button.click(
