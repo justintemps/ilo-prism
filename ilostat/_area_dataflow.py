@@ -112,8 +112,7 @@ def get_area_dataflows():
                     con.commit()
                 else:
                     print(
-                        f"Error: {df} includes Area {
-                          area_code} but this is not in the database"
+                        f"Error: {df} includes Area {area_code} but this is not in the database"
                     )
 
         bar.update()

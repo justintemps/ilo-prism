@@ -1,6 +1,7 @@
 import gradio as gr
 from app.defaults import AppDefaults
 from app.controller import AppController
+from app.predict import AppPredictor
 
 # ===========================
 # Conroller & Default Classes
@@ -175,8 +176,13 @@ with gr.Blocks(fill_height=True) as demo:
                 )
 
             with gr.Tab("Summary"):
-                gr.TextArea("Summary")
-                gr.Button("Generate summary")
+                output_textarea = gr.TextArea("Summary")
+                get_summary_button = gr.Button("Generate summary")
+                get_summary_button.click(
+                    fn=control.stream_prediction,
+                    inputs=output_dataframe,
+                    outputs=output_textarea,
+                )
 
     # ===========================
     # Component Event Handlers
