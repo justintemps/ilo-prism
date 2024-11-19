@@ -1,7 +1,6 @@
 import gradio as gr
 from app.defaults import AppDefaults
 from app.controller import AppController
-from app.predict import AppPredictor
 
 # ===========================
 # Conroller & Default Classes
@@ -30,22 +29,23 @@ dataflows_dropdown = gr.Dropdown(
     value=initial.dataflow,
 )
 
-
+# Label for the selected dataflow
 dataflow_label = gr.Markdown("")
 
+# Description of the selected dataflow from ILOSTAT
 dataflow_description = gr.HTML("Description goes here")
-
-get_summary_button = gr.Button("Generate summary")
-
-output_textarea = gr.TextArea("Summary", label="Summary will appear here")
-
 
 # Output dataframe
 output_dataframe = gr.DataFrame(value=initial.dataframe)
 
-
 # Button to submit form data
 get_data_button = gr.Button("Update data")
+
+# Button to generate summary
+get_summary_button = gr.Button("Generate summary")
+
+# Output textarea for the summary
+output_textarea = gr.TextArea("Summary", label="Summary will appear here")
 
 
 with gr.Blocks(fill_height=True) as demo:
@@ -89,7 +89,6 @@ with gr.Blocks(fill_height=True) as demo:
                 dataflows_dropdown.render()
 
             # Dynamically render dimension dropdowns based on selected dataflow
-
             @gr.render(inputs=dimensions)
             def render_dimensions(dims):
 
