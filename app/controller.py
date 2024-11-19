@@ -1,13 +1,12 @@
 import gradio as gr
 from ilostat.ilostat import ILOStat
 from . import ilostat, default_client
-
 from ._dim_controller import DimensionController
 from .predict import AppPredictor
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import Generator, Any
+from typing import Generator, Any, Tuple
 
 # Set pandas options to avoid silent downcasting warnings when dealing with data types
 pd.set_option("future.no_silent_downcasting", True)
@@ -211,8 +210,20 @@ class AppController:
 
             return plot
 
-    def stream_prediction(self, df: pd.DataFrame) -> Generator[str | Any, Any, None]:
-        df = df.loc[:, df.nunique() > 1]
+    def stream_prediction(
+        self,
+        area: str,
+        dataflow: str,
+        dataflow_description: str,
+        df: pd.DataFrame,
+    ) -> Generator[str | Any, Any, None]:
+        dataflow_label = ilostat.get_dataflow_label(dataflow)
+        area_label = ilostat.get_area_label(area)
         message = df.to_string(index=False)
-        for response in self._llm_client.respond(message=message):
+        for response in self._llm_client.respond(
+            area_label=area_label,
+            data_label=dataflow_label,
+            data_description=dataflow_description,
+            message=message,
+        ):
             yield response

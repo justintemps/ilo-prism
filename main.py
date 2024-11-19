@@ -37,7 +37,7 @@ dataflow_description = gr.HTML("Description goes here")
 
 get_summary_button = gr.Button("Generate summary")
 
-output_textarea = gr.TextArea("Summary")
+output_textarea = gr.TextArea("Summary", label="Summary will appear here")
 
 
 # Output dataframe
@@ -235,7 +235,12 @@ with gr.Blocks(fill_height=True) as demo:
     # Event to handle summary button click, processing the output dataframe and outputting summary
     get_summary_button.click(
         fn=control.stream_prediction,
-        inputs=output_dataframe,
+        inputs=[
+            areas_dropdown,
+            dataflows_dropdown,
+            dataflow_description,
+            output_dataframe,
+        ],
         outputs=output_textarea,
     )
 
