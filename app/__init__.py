@@ -11,8 +11,6 @@ MODEL = "HuggingFaceH4/zephyr-7b-beta"
 # Hugging face token
 HUGGING_FACE_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
 
-print(HUGGING_FACE_TOKEN)
-
 # LLM Client object
 default_client = AppPredictor(MODEL, token=HUGGING_FACE_TOKEN)
 

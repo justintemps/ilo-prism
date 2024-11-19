@@ -23,7 +23,12 @@ class ILOStatQuery:
         self.dataflow = dataflow
         self.dimensions = dimensions
         self.params = params
-        self._ilostat = sdmx.Client("ILO")  # Initialize SDMX client for ILO data
+        self._ilostat = sdmx.Client(
+            "ILO",
+            backend="sqlite",
+            fast_save=True,
+            expire_after=600,
+        )  # Initialize SDMX client for ILO data
         self.language = language
 
         # Internal attributes to store metadata, multiplier, and code list mappings
