@@ -4,3 +4,4 @@
 .venv
 __pycache__
 http_cache.sqlite
+.DS_Store
