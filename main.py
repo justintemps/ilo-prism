@@ -23,16 +23,21 @@ areas_dropdown = gr.Dropdown(
     label="Select a geographic region", choices=initial.areas, value=initial.area
 )
 
-# Dropdown for dataflows (indicators) initialized as inactive
+# Dropdown for dataflows (indicators) with dynamic choices
 dataflows_dropdown = gr.Dropdown(
     label="Select an indicator from ILOSTAT",
     choices=initial.dataflows,
     value=initial.dataflow,
 )
 
-dataflow_title = gr.Markdown("Choose a country")
 
-dataflow_label = gr.Markdown("Choose an indicator")
+dataflow_label = gr.Markdown("")
+
+dataflow_description = gr.HTML("Description goes here")
+
+get_summary_button = gr.Button("Generate summary")
+
+output_textarea = gr.TextArea("Summary")
 
 
 # Output dataframe
@@ -163,10 +168,10 @@ with gr.Blocks(fill_height=True) as demo:
 
             dataflow_label.render()
 
-            with gr.Tab("Data"):
+            with gr.Tab("🔢 Data"):
                 output_dataframe.render()
 
-            with gr.Tab("Chart"):
+            with gr.Tab("📊 Chart"):
                 output_chart = gr.Plot()
 
                 output_dataframe.change(
@@ -175,14 +180,13 @@ with gr.Blocks(fill_height=True) as demo:
                     outputs=output_chart,
                 )
 
-            with gr.Tab("Summary"):
-                output_textarea = gr.TextArea("Summary")
-                get_summary_button = gr.Button("Generate summary")
-                get_summary_button.click(
-                    fn=control.stream_prediction,
-                    inputs=output_dataframe,
-                    outputs=output_textarea,
-                )
+            with gr.Tab("📚 Metadata"):
+                gr.Markdown("### Description of the data from ILOSTAT")
+                dataflow_description.render()
+
+            with gr.Tab("✏️ Summary"):
+                output_textarea.render()
+                get_summary_button.render()
 
     # ===========================
     # Component Event Handlers
@@ -219,6 +223,20 @@ with gr.Blocks(fill_height=True) as demo:
         control.set_dataflow_label,
         inputs=[areas_dropdown, dataflows_dropdown],
         outputs=dataflow_label,
+    )
+
+    # Update the dataflow description but only when the dataframe is updated
+    output_dataframe.change(
+        control.set_description,
+        inputs=dataflows_dropdown,
+        outputs=dataflow_description,
+    )
+
+    # Event to handle summary button click, processing the output dataframe and outputting summary
+    get_summary_button.click(
+        fn=control.stream_prediction,
+        inputs=output_dataframe,
+        outputs=output_textarea,
     )
 
 

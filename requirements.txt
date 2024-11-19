@@ -1,7 +1,9 @@
 aiofiles==23.2.1
 annotated-types==0.7.0
 anyio==4.6.2.post1
+attrs==24.2.0
 blurhash==1.1.4
+cattrs==24.1.2
 certifi==2024.8.30
 charset-normalizer==3.4.0
 click==8.1.7
@@ -49,6 +51,7 @@ pytz==2024.2
 PyYAML==6.0.2
 request-session==0.16.2
 requests==2.32.3
+requests-cache==1.2.1
 rich==13.9.3
 ruff==0.7.1
 safehttpx==0.1.1
@@ -66,6 +69,7 @@ tqdm==4.66.6
 typer==0.12.5
 typing_extensions==4.12.2
 tzdata==2024.2
+url-normalize==1.4.3
 urllib3==2.2.3
 uvicorn==0.32.0
 websockets==12.0

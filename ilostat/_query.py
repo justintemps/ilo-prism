@@ -25,9 +25,9 @@ class ILOStatQuery:
         self.params = params
         self._ilostat = sdmx.Client(
             "ILO",
-            backend="sqlite",
-            fast_save=True,
-            expire_after=600,
+            # backend="sqlite",
+            # fast_save=True,
+            # expire_after=600,
         )  # Initialize SDMX client for ILO data
         self.language = language
 

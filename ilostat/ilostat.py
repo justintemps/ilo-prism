@@ -10,10 +10,6 @@ from ._query import ILOStatQuery
 from .area_dimensions import filter_area_dimensions
 
 
-from typing import Literal
-import sqlite3
-
-
 class ILOStat:
     """A class to interact with the ILOSTAT API, providing access to metadata,
     dataflows, and descriptions for various country and area data.
@@ -38,13 +34,6 @@ class ILOStat:
             print("Refreshing metadata...")
             self.__init_metadata()
 
-        # Establish connection to the SQLite database
-        self.__con = sqlite3.connect("store/ilo-prism.db", check_same_thread=False)
-
-    def __del__(self):
-        """Destructor to ensure the database connection is closed upon deletion."""
-        self.close()
-
     def __validate_metadata(self) -> bool:
         """
         Checks if the metadata is valid in the database.
@@ -64,12 +53,6 @@ class ILOStat:
         get_dataflows()
         get_area_dataflows()
 
-    def close(self):
-        """Closes the database connection if it is open."""
-        if self.__con:
-            self.__con.close()
-            print("Database connection closed")
-
     def get_areas(self) -> list[tuple[str, str]]:
         """
         Retrieves a list of areas (name and code) based on the selected language.
@@ -77,42 +60,43 @@ class ILOStat:
         Returns:
         - list[tuple[str, str]]: A list of area names and their corresponding codes.
         """
-        cursor = self.__con.cursor()
-        try:
-            cursor.execute(
-                """
-                SELECT cn.name, ca.code
-                FROM cl_area AS ca
-                JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
-                JOIN language AS l ON cn.language_uid = l.language_uid
-                WHERE l.code = ?
-                """,
-                (self.language,),
-            )
-            results = cursor.fetchall()
-        finally:
-            cursor.close()  # Ensure cursor is closed
+        with sqlite3.connect("store/ilo-prism.db", check_same_thread=False) as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    """
+                    SELECT cn.name, ca.code
+                    FROM cl_area AS ca
+                    JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
+                    JOIN language AS l ON cn.language_uid = l.language_uid
+                    WHERE l.code = ?
+                    """,
+                    (self.language,),
+                )
+                results = cursor.fetchall()
+            finally:
+                cursor.close()  # Ensure cursor is closed
         return results
 
-    def get_area_label(self, area):
+    def get_area_label(self, area: str):
         """Retrieves the label of an area based on the code"""
-        cursor = self.__con.cursor()
-        try:
-            cursor.execute(
-                """
-                SELECT cn.name
-                FROM cl_area AS ca
-                JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
-                JOIN language AS l ON cn.language_uid = l.language_uid
-                WHERE l.code = ? AND ca.code = ?;
-                """,
-                (self.language, area),
-            )
-            results = cursor.fetchone()
-            return results[0] if results else None
-        finally:
-            cursor.close()  # Ensure cursor is closed
-        return results
+        with sqlite3.connect("store/ilo-prism.db", check_same_thread=False) as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    """
+                    SELECT cn.name
+                    FROM cl_area AS ca
+                    JOIN cl_area_name AS cn ON ca.cl_area_uid = cn.cl_area_uid
+                    JOIN language AS l ON cn.language_uid = l.language_uid
+                    WHERE l.code = ? AND ca.code = ?;
+                    """,
+                    (self.language, area),
+                )
+                results = cursor.fetchone()
+                return results[0] if results else None
+            finally:
+                cursor.close()  # Ensure cursor is closed
 
     def get_dataflows(self, country: str):
         """
@@ -125,24 +109,25 @@ class ILOStat:
         - list[tuple[str, str]]: A list of dataflows, each represented by a tuple
                                   containing the name and code.
         """
-        cursor = self.__con.cursor()
-        try:
-            cursor.execute(
-                """
-                SELECT dn.name, d.code
-                FROM cl_area AS ca
-                JOIN cl_area_dataflow AS cad ON ca.cl_area_uid = cad.cl_area_uid
-                JOIN dataflow AS d ON cad.dataflow_uid = d.dataflow_uid
-                JOIN dataflow_name AS dn ON d.dataflow_uid = dn.dataflow_uid
-                JOIN language AS l ON dn.language_uid = l.language_uid
-                WHERE ca.code = ? AND l.code = ?
-                ORDER BY dn.name ASC;
-                """,
-                (country, self.language),
-            )
-            return cursor.fetchall()
-        finally:
-            cursor.close()  # Ensure cursor is closed
+        with sqlite3.connect("store/ilo-prism.db", check_same_thread=False) as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    """
+                    SELECT dn.name, d.code
+                    FROM cl_area AS ca
+                    JOIN cl_area_dataflow AS cad ON ca.cl_area_uid = cad.cl_area_uid
+                    JOIN dataflow AS d ON cad.dataflow_uid = d.dataflow_uid
+                    JOIN dataflow_name AS dn ON d.dataflow_uid = dn.dataflow_uid
+                    JOIN language AS l ON dn.language_uid = l.language_uid
+                    WHERE ca.code = ? AND l.code = ?
+                    ORDER BY dn.name ASC;
+                    """,
+                    (country, self.language),
+                )
+                return cursor.fetchall()
+            finally:
+                cursor.close()  # Ensure cursor is closed
 
     def get_dataflow_label(self, dataflow: str):
         """
@@ -154,22 +139,23 @@ class ILOStat:
         Returns:
         - str: The label of the dataflow, if found.
         """
-        cursor = self.__con.cursor()
-        try:
-            cursor.execute(
-                """
-                SELECT dn.name
-                FROM dataflow AS d
-                JOIN dataflow_name AS dn ON d.dataflow_uid = dn.dataflow_uid
-                JOIN language AS l ON dn.language_uid = l.language_uid
-                WHERE d.code = ? AND l.code = ?
-                """,
-                (dataflow, self.language),
-            )
-            result = cursor.fetchone()
-            return result[0] if result else None  # Return the label if found, else None
-        finally:
-            cursor.close()  # Ensure cursor is closed
+        with sqlite3.connect("store/ilo-prism.db", check_same_thread=False) as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    """
+                    SELECT dn.name
+                    FROM dataflow AS d
+                    JOIN dataflow_name AS dn ON d.dataflow_uid = dn.dataflow_uid
+                    JOIN language AS l ON dn.language_uid = l.language_uid
+                    WHERE d.code = ? AND l.code = ?
+                    """,
+                    (dataflow, self.language),
+                )
+                result = cursor.fetchone()
+                return result[0] if result else None
+            finally:
+                cursor.close()  # Ensure cursor is closed
 
     def get_dataflow_description(self, dataflow: str):
         """
@@ -181,21 +167,23 @@ class ILOStat:
         Returns:
         - tuple: The description of the dataflow, if found.
         """
-        cursor = self.__con.cursor()
-        try:
-            cursor.execute(
-                """
-                SELECT dd.description
-                FROM dataflow AS d
-                JOIN dataflow_description AS dd ON d.dataflow_uid = dd.dataflow_uid
-                JOIN language AS l ON dd.language_uid = l.language_uid
-                WHERE d.code = ? AND l.code = ?
-                """,
-                (dataflow, self.language),
-            )
-            return cursor.fetchone()
-        finally:
-            cursor.close()  # Ensure cursor is closed
+        with sqlite3.connect("store/ilo-prism.db", check_same_thread=False) as conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    """
+                    SELECT dd.description
+                    FROM dataflow AS d
+                    JOIN dataflow_description AS dd ON d.dataflow_uid = dd.dataflow_uid
+                    JOIN language AS l ON dd.language_uid = l.language_uid
+                    WHERE d.code = ? AND l.code = ?
+                    """,
+                    (dataflow, self.language),
+                )
+                result = cursor.fetchone()
+                return result[0] if result else None
+            finally:
+                cursor.close()  # Ensure cursor is closed
 
     def get_dimensions(self, df: str):
         """
@@ -220,7 +208,7 @@ class ILOStat:
         self, dataflow: str, dimensions: dict[str, str], params: dict[str, str] = None
     ):
         """
-        Queries the ILOSTAT API based on specified dataflow, dimensions, and parameters.
+        Initializes an ILOStatQuery object with the specified dataflow, dimensions,
 
         Parameters:
         - dataflow (str): The dataflow code to query.
@@ -228,7 +216,7 @@ class ILOStat:
         - params (dict[str, str]): Additional parameters for the query.
 
         Returns:
-        - ILOStatQuery: An ILOStatQuery object containing the query result.
+        - ILOStatQuery: An ILOStatQuery object
         """
         return ILOStatQuery(
             dataflow=dataflow,
