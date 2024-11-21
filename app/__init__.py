@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Model to use
-MODEL = "HuggingFaceH4/zephyr-7b-beta"
+MODEL = "microsoft/tapex-base"
 
 # Hugging face token
 HUGGING_FACE_TOKEN = os.getenv("HUGGING_FACE_TOKEN")

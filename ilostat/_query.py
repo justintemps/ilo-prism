@@ -99,6 +99,7 @@ class ILOStatQuery:
         # Convert the SDMX message to a Pandas DataFrame
         data = data_msg.data[0]
         df = sdmx.to_pandas(data).reset_index(name="value")
+        print(df)
 
         # Format the number with the right multiplier and decimals
         for index, observation in enumerate(data.obs):
@@ -152,7 +153,7 @@ if __name__ == "__main__":
 
     # Instantiate and run the query
     query = ILOStatQuery(
-        language="fr", dataflow=df, dimensions=dimensions, params=params
+        language="en", dataflow=df, dimensions=dimensions, params=params
     )
 
     result = query.data()

@@ -1,9 +1,9 @@
 from huggingface_hub import InferenceClient
 from typing import Tuple
 
-SYMSTEM_MESSAGE = "Summarize the data retrieved from the International Labour Organization's ILOSTAT database in a factual and objective tone. Limit the summary strictly to describing the data, focusing solely on patterns, figures, and relationships present in the tables, without adding context or analysis beyond the provided data."
+SYMSTEM_MESSAGE = "Generate a concise summary of the labour statistics data retrieved from the International Labour Organization's ILOSTAT database, using a factual and objective tone. Focus strictly on patterns, trends, figures, and relationships evident in the data table, without providing contextual explanations or interpretations beyond the data itself. Highlight notable changes in values, any observable trends over time, and relevant statistical shifts as presented in the data."
 
-MAX_TOKENS = 512
+MAX_TOKENS = 1000
 
 TEMPERATURE = 0.7
 
@@ -20,10 +20,10 @@ class AppPredictor:
         data_label: str,
         data_description: str,
     ):
-        return f"""This data comes from the dataset: {data_label}
-                The geographic region for this data is: {area_label}
-                The description of this dataset is: {data_description}
-                Here is the data to analyse: {message}"""
+        return f"""The dataset represents: {data_label}
+                Geographic scope:: {area_label}
+                Dataset description: {data_description}
+                Table data overview: {message}"""
 
     # This is a Generator callback that is used by the Interface client to yield responses
     def respond(
