@@ -210,7 +210,7 @@ class AppController:
 
             return plot
 
-    def stream_prediction(
+    def chat_completion(
         self,
         area: str,
         dataflow: str,
@@ -219,10 +219,23 @@ class AppController:
     ) -> Generator[str | Any, Any, None]:
         dataflow_label = ilostat.get_dataflow_label(dataflow)
         area_label = ilostat.get_area_label(area)
-        for response in self._llm_client.stream_response(
+        for response in self._llm_client.chat_completion(
             df=df,
             area_label=area_label,
             data_label=dataflow_label,
             data_description=dataflow_description,
         ):
             yield response
+
+    def table_question_answering(
+        self, area: str, dataflow: str, dataflow_description: str, df: pd.DataFrame
+    ):
+
+        response = self._llm_client.table_question_answering(
+            df=df,
+            area_label=area,
+            data_label=dataflow,
+            data_description=dataflow_description,
+        )
+
+        return response

@@ -45,7 +45,7 @@ class AppPredictor:
                 Table data overview: {table}"""
 
     # This is a Generator callback that is used by the Interface client to yield responses
-    def stream_response(
+    def chat_completion(
         self,
         df: pd.DataFrame,
         area_label: str,
@@ -88,7 +88,9 @@ class AppPredictor:
             # Yield the next part of the response
             yield response
 
-    def sync_response(
+    # Use post method to send the model a formatted query
+    # https://huggingface.co/docs/huggingface_hub/v0.26.5/en/guides/inference#legacy-inferenceapi-client
+    def table_question_answering(
         self,
         df: pd.DataFrame,
         area_label: str,
@@ -99,13 +101,14 @@ class AppPredictor:
         temperature=TEMPERATURE,
     ):
 
-        prompt = f"""[CLS] {SYMSTEM_MESSAGE} [SEP] The dataset represents: {data_label} Geographic scope: {area_label} Dataset description: {data_description} Table data overview: {self._serialize_dataframe(df)} [SEP]"""
+        table = df.to_dict(orient="list")
 
-        response = self.__client.query(
-            prompt=prompt,
-            max_tokens=max_tokens,
-            temperature=temperature,
+        response = self.__client.table_question_answering(
+            table=table,
+            query="In what year was the highest unemployment rate recorded?",
         )
+
+        return response.answers
 
 
 if __name__ == "__main__":
