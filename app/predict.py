@@ -1,5 +1,5 @@
 from huggingface_hub import InferenceClient
-from typing import Tuple
+import pandas as pd
 
 SYMSTEM_MESSAGE = "Generate a concise summary of the labour statistics data retrieved from the International Labour Organization's ILOSTAT database, using a factual and objective tone. Focus strictly on patterns, trends, figures, and relationships evident in the data table, without providing contextual explanations or interpretations beyond the data itself. Highlight notable changes in values, any observable trends over time, and relevant statistical shifts as presented in the data."
 
@@ -13,22 +13,41 @@ class AppPredictor:
     def __init__(self, model: str, token):
         self.__client = InferenceClient(model, token=token)
 
-    def _embellish_message(
+    # Serialize the table into Tapex-compatible format
+
+    def _serialize_dataframe(self, df: pd.DataFrame):
+
+        # Get column headers
+        headers = " | ".join(df.columns)
+
+        # Get rows as strings
+        rows = [" | ".join(map(str, row)) for row in df.values]
+
+        # Combine headers and rows
+        serialized_table = f"| {headers} |\n" + "\n".join(
+            [f"| {row} |" for row in rows]
+        )
+        return serialized_table
+
+    def _format_message(
         self,
-        message: str,
+        df: pd.DataFrame,
         area_label: str,
         data_label: str,
         data_description: str,
     ):
+
+        table = self._serialize_dataframe(df)
+
         return f"""The dataset represents: {data_label}
-                Geographic scope:: {area_label}
+                Geographic scope: {area_label}
                 Dataset description: {data_description}
-                Table data overview: {message}"""
+                Table data overview: {table}"""
 
     # This is a Generator callback that is used by the Interface client to yield responses
-    def respond(
+    def stream_response(
         self,
-        message: str,
+        df: pd.DataFrame,
         area_label: str,
         data_label: str,
         data_description=str,
@@ -39,8 +58,8 @@ class AppPredictor:
         # Initialize the messages with the first system message
         messages = [{"role": "system", "content": system_message}]
 
-        user_message = self._embellish_message(
-            message,
+        user_message = self._format_message(
+            df=df,
             area_label=area_label,
             data_label=data_label,
             data_description=data_description,
@@ -48,8 +67,6 @@ class AppPredictor:
 
         # Adds the current message from the user
         messages.append({"role": "user", "content": user_message})
-
-        print(messages)
 
         # Initialize the response
         response = ""
@@ -70,3 +87,26 @@ class AppPredictor:
 
             # Yield the next part of the response
             yield response
+
+    def sync_response(
+        self,
+        df: pd.DataFrame,
+        area_label: str,
+        data_label: str,
+        data_description=str,
+        system_message=SYMSTEM_MESSAGE,
+        max_tokens=MAX_TOKENS,
+        temperature=TEMPERATURE,
+    ):
+
+        prompt = f"""[CLS] {SYMSTEM_MESSAGE} [SEP] The dataset represents: {data_label} Geographic scope: {area_label} Dataset description: {data_description} Table data overview: {self._serialize_dataframe(df)} [SEP]"""
+
+        response = self.__client.query(
+            prompt=prompt,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+
+
+if __name__ == "__main__":
+    pass

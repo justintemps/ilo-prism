@@ -219,11 +219,10 @@ class AppController:
     ) -> Generator[str | Any, Any, None]:
         dataflow_label = ilostat.get_dataflow_label(dataflow)
         area_label = ilostat.get_area_label(area)
-        message = df.to_string(index=False)
-        for response in self._llm_client.respond(
+        for response in self._llm_client.stream_response(
+            df=df,
             area_label=area_label,
             data_label=dataflow_label,
             data_description=dataflow_description,
-            message=message,
         ):
             yield response
