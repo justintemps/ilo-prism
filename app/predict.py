@@ -1,11 +1,22 @@
 from huggingface_hub import InferenceClient
 import pandas as pd
+import requests
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 SYMSTEM_MESSAGE = "Generate a concise summary of the labour statistics data retrieved from the International Labour Organization's ILOSTAT database, using a factual and objective tone. Focus strictly on patterns, trends, figures, and relationships evident in the data table, without providing contextual explanations or interpretations beyond the data itself. Highlight notable changes in values, any observable trends over time, and relevant statistical shifts as presented in the data."
 
 MAX_TOKENS = 1000
 
 TEMPERATURE = 0.7
+
+token = os.getenv("HUGGING_FACE_TOKEN")
+
+API_URL = "https://api-inference.huggingface.co/models/google/tapas-large-finetuned-wtq"
+headers = {"Authorization": f"Bearer {token}"}
 
 
 class AppPredictor:
@@ -101,14 +112,30 @@ class AppPredictor:
         temperature=TEMPERATURE,
     ):
 
-        table = df.to_dict(orient="list")
+        new_df = df[["TIME_PERIOD", "value"]].copy()
 
-        response = self.__client.table_question_answering(
-            table=table,
-            query="In what year was the highest unemployment rate recorded?",
+        new_col_names = {"TIME_PERIOD": "year", "value": "Global Unemployment Rate"}
+
+        new_df.rename(columns=new_col_names, inplace=True)
+
+        df_str = new_df.astype(str)
+        table = df_str.to_dict(orient="list")
+        print(table)
+
+        def query(payload):
+            response = requests.post(API_URL, headers=headers, json=payload)
+            return response.json()
+
+        output = query(
+            {
+                "inputs": {
+                    "query": "Is global unemployment trending up or down?",
+                    "table": table,
+                }
+            }
         )
 
-        return response.answers
+        return output
 
 
 if __name__ == "__main__":
