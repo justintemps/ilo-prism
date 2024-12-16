@@ -1,5 +1,6 @@
 from typing import Literal
 import sdmx
+from ._result import ILOStatQueryResult
 
 
 class ILOStatQuery:
@@ -77,7 +78,7 @@ class ILOStatQuery:
         except KeyError:
             return value
 
-    def data(self):
+    def data(self) -> ILOStatQueryResult:
         """
         Fetch and return data as a Pandas DataFrame, with human-readable names
         for dimensions and values adjusted by the multiplier.
@@ -98,33 +99,14 @@ class ILOStatQuery:
 
         # Convert the SDMX message to a Pandas DataFrame
         data = data_msg.data[0]
-        df = sdmx.to_pandas(data).reset_index(name="value")
 
-        # Format the number with the right multiplier and decimals
-        for index, observation in enumerate(data.obs):
-            multiplier = pow(10, int(observation.attached_attribute["UNIT_MULT"].value))
-            decimals = int(observation.attached_attribute["DECIMALS"].value)
-            # Apply the multiplier and round the value to the specified number of decimals
-            df.loc[index, "value"] = round(
-                df.loc[index, "value"] * multiplier, decimals
-            )
+        # Instantiate ILOStatQueryResult object
+        result = ILOStatQueryResult(
+            data=data, codelist=self._codelist, language=self.language
+        )
 
-        # Apply human-readable names to dimension columns
-        for column in df.columns:
-            if column in self._codelist and self._codelist[column] is not None:
-                df[column] = df[column].apply(
-                    lambda x: self._get_readable_name(column, x)
-                )
-
-        # Rename columns to human-readable names in the specified language
-        column_rename_map = {
-            column: self._codelist[column].name.localizations[self.language]
-            for column in df.columns
-            if column in self._codelist and hasattr(self._codelist[column], "name")
-        }
-        df.rename(columns=column_rename_map, inplace=True)
-
-        return df
+        # Return the object as the result
+        return result
 
     @property
     def url(self):
@@ -139,28 +121,30 @@ class ILOStatQuery:
 
 if __name__ == "__main__":
     # Define parameters for a sample query
-    df = "DF_EAR_4MTH_SEX_CUR_NB"
+    df = "DF_UNE_2EAP_SEX_AGE_RT"
 
     dimensions = {
-        "FREQ": "A",
-        "MEASURE": "EAR_4MTH_NB",
-        "SEX": "SEX_T",
-        "CUR": "CUR_TYPE_PPP",
-        "REF_AREA": "CMR",
+        "SEX": "SEX_T+SEX_M+SEX_F",
+        "AGE": "AGE_YTHADULT_YGE15",
+        "TIME_PERIOD": "9",
+        "REF_AREA": "X01+ITA",
     }
-    params = {"startPeriod": "2014", "endPeriod": "2024"}
+    params = {"startPeriod": "2020", "endPeriod": "2026"}
 
     # Instantiate and run the query
     query = ILOStatQuery(
         language="en", dataflow=df, dimensions=dimensions, params=params
     )
 
+    # Execute the query
     result = query.data()
+
+    # Get the dataframe of the data
+    dataframe = result.df
 
     print("Query URL", query.url)
     print("dataflow", query.dataflow)
     print("dimensions", query.dimensions)
     print("params", query.params)
     print("codelist", query.codelist)
-
-    print(result)
+    print(dataframe)
