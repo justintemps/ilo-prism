@@ -170,7 +170,7 @@ class AppController:
         )
         result = query.data()
 
-        return result
+        return result.dataframe
 
     def set_chart(self, df: pd.DataFrame):
         """
@@ -189,7 +189,6 @@ class AppController:
 
             # Set axis labels
             plt.xlabel("Time period")
-            plt.ylabel(df["Measure"].iloc[0])
 
             # Group and plot data based on classification columns
             classifications = [col for col in df.columns if "classif" in col.lower()]

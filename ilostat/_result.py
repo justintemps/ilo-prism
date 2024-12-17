@@ -20,7 +20,7 @@ class ILOStatQueryResult:
         self._base_df = sdmx.to_pandas(self._sdmx_data).reset_index(name="value")
 
         # Format the base DataFrame into the final readable version
-        self.df = self._format_df()
+        self.dataframe = self._format_df()
 
     def _get_readable_name(self, column, value):
         """
@@ -51,6 +51,13 @@ class ILOStatQueryResult:
         # Create a deep copy of the base dataframe to avoid modifying the original
         formatted_df = pd.DataFrame.copy(self._base_df, deep=True)
 
+        # Drop the FREQ and MEASURE columns if they are present
+        if "FREQ" in formatted_df.columns:
+            formatted_df.drop(columns=["FREQ"], inplace=True)
+
+        if "MEASURE" in formatted_df.columns:
+            formatted_df.drop(columns=["MEASURE"], inplace=True)
+
         # Process each observation to apply multipliers and decimals
         for index, observation in enumerate(self._sdmx_data.obs):
             multiplier = pow(10, int(observation.attached_attribute["UNIT_MULT"].value))
@@ -78,6 +85,24 @@ class ILOStatQueryResult:
         return formatted_df
 
     @property
+    def base_dataframe(self):
+        """Return the base DataFrame before formatting."""
+        return self._base_df
+
+    @property
+    def nested_dataframe(self):
+        """Return a multi-indexed version of the DataFrame."""
+        # Create a deep copy of the formatted DataFrame to avoid modifying the original
+        indexed_df = pd.DataFrame.copy(self.dataframe, deep=True)
+
+        # Make the index multi-level by combining all columns except the value
+        indexed_df.set_index(
+            list(indexed_df.columns[:-1]), inplace=True, drop=True, append=False
+        )
+
+        return indexed_df
+
+    @property
     def codelist(self):
         """Retrieve the codelist for dimension values."""
         return self._codelist
@@ -97,7 +122,7 @@ if __name__ == "__main__":
 
     # Specify dimensions for filtering the query
     dimensions = {
-        "SEX": "SEX_T+SEX_M+SEX_F",
+        "SEX": "SEX_M+SEX_F",
         "AGE": "AGE_YTHADULT_YGE15",
         "TIME_PERIOD": "9",
         "REF_AREA": "X01+ITA",
@@ -117,5 +142,8 @@ if __name__ == "__main__":
     # Extract the formatted DataFrame
     dataframe = result.df
 
-    # Print the formatted DataFrame
     print(dataframe)
+
+    indexed_dataframe = result.nested_dataframe
+
+    print(indexed_dataframe)

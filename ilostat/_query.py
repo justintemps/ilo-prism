@@ -62,22 +62,6 @@ class ILOStatQuery:
             codelist[dim_id] = dim_name  # Map each dimension ID to its code list
         self._codelist = codelist
 
-    def _get_readable_name(self, column, value):
-        """
-        Retrieve a human-readable name for a code list value.
-
-        Args:
-            column (str): Dimension ID for which the readable name is needed.
-            value (str): Specific code value to translate to a human-readable name.
-
-        Returns:
-            str: Human-readable name or the original value if not found.
-        """
-        try:
-            return self._codelist[column][value].name[self.language]
-        except KeyError:
-            return value
-
     def data(self) -> ILOStatQueryResult:
         """
         Fetch and return data as a Pandas DataFrame, with human-readable names
@@ -140,7 +124,7 @@ if __name__ == "__main__":
     result = query.data()
 
     # Get the dataframe of the data
-    dataframe = result.df
+    dataframe = result.dataframe
 
     print("Query URL", query.url)
     print("dataflow", query.dataflow)
