@@ -233,7 +233,7 @@ with gr.Blocks(fill_height=True) as demo:
 
     # Event to handle summary button click, processing the output dataframe and outputting summary
     get_summary_button.click(
-        fn=control.table_question_answering,
+        fn=control.chat_completion,
         inputs=[
             areas_dropdown,
             dataflows_dropdown,

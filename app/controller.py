@@ -1,8 +1,8 @@
 import gradio as gr
 from ilostat.ilostat import ILOStat
-from . import ilostat, default_client
+from . import ilostat, CHATBOT_MODEL
 from ._dim_controller import DimensionController
-from .predict import AppPredictor
+from predict.chat import ChatBot
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,9 +20,7 @@ class AppController:
     user-selected parameters such as area and dataflows.
     """
 
-    def __init__(
-        self, llm_client: AppPredictor = default_client, ilostat: ILOStat = ilostat
-    ):
+    def __init__(self, ilostat: ILOStat = ilostat):
         """
         Initialize the AppController with an ILOStat instance.
 
@@ -31,7 +29,7 @@ class AppController:
         """
         self._ilostat = ilostat
         self.dimension_controller = DimensionController
-        self._llm_client = llm_client
+        self._chatbot = ChatBot(model=CHATBOT_MODEL)
 
     def set_dataflows(self, area: str):
         """
@@ -216,25 +214,17 @@ class AppController:
         dataflow_description: str,
         df: pd.DataFrame,
     ) -> Generator[str | Any, Any, None]:
+        # Get the dataflow label
         dataflow_label = ilostat.get_dataflow_label(dataflow)
+
+        # Get the area label
         area_label = ilostat.get_area_label(area)
-        for response in self._llm_client.chat_completion(
+
+        # Get a response from the chatbot
+        for response in self._chatbot.respond(
             df=df,
             area_label=area_label,
             data_label=dataflow_label,
             data_description=dataflow_description,
         ):
             yield response
-
-    def table_question_answering(
-        self, area: str, dataflow: str, dataflow_description: str, df: pd.DataFrame
-    ):
-
-        response = self._llm_client.table_question_answering(
-            df=df,
-            area_label=area,
-            data_label=dataflow,
-            data_description=dataflow_description,
-        )
-
-        return response
