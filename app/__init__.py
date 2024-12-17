@@ -1,8 +1,11 @@
 import os
 from ilostat.ilostat import ILOStat
 
-# Model to use
+# Chatbot Model
 CHATBOT_MODEL = "HuggingFaceH4/zephyr-7b-beta"
+
+# Summarization Model
+SUMMARIZATION_MODEL = "facebook/bart-large-cnn"
 
 # Default area
 default_area = "X01"
