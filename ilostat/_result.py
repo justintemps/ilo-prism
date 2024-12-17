@@ -4,10 +4,22 @@ import sdmx
 
 class ILOStatQueryResult:
     def __init__(self, data, codelist, language):
-        self._sdmx_data = data
-        self._codelist = codelist
-        self.language = language
+        """
+        Initialize the ILOStatQueryResult class.
+
+        Args:
+            data: SDMX data object containing the results of a query.
+            codelist (dict): Dictionary mapping dimension IDs to their codelists.
+            language (str): Language code for translating codelist names.
+        """
+        self._sdmx_data = data  # Store the raw SDMX data
+        self._codelist = codelist  # Store the codelist for dimension values
+        self.language = language  # Set the preferred language for translations
+
+        # Convert SDMX data to a pandas DataFrame and reset the index
         self._base_df = sdmx.to_pandas(self._sdmx_data).reset_index(name="value")
+
+        # Format the base DataFrame into the final readable version
         self.df = self._format_df()
 
     def _get_readable_name(self, column, value):
@@ -22,32 +34,40 @@ class ILOStatQueryResult:
             str: Human-readable name or the original value if not found.
         """
         try:
+            # Return the localized name for the given column and value
             return self._codelist[column][value].name[self.language]
         except KeyError:
+            # Return the original value if a name is not found in the codelist
             return value
 
     def _format_df(self):
+        """
+        Format the base DataFrame by applying multipliers, decimals,
+        and human-readable names to columns.
 
-        # Create a copy of the base dataframe
+        Returns:
+            pd.DataFrame: Formatted DataFrame with readable values.
+        """
+        # Create a deep copy of the base dataframe to avoid modifying the original
         formatted_df = pd.DataFrame.copy(self._base_df, deep=True)
 
-        # Format the number with the right multiplier and decimals
+        # Process each observation to apply multipliers and decimals
         for index, observation in enumerate(self._sdmx_data.obs):
             multiplier = pow(10, int(observation.attached_attribute["UNIT_MULT"].value))
             decimals = int(observation.attached_attribute["DECIMALS"].value)
-            # Apply the multiplier and round the value to the specified number of decimals
+            # Multiply and round values to the specified number of decimals
             formatted_df.loc[index, "value"] = round(
                 formatted_df.loc[index, "value"] * multiplier, decimals
             )
 
-        # Apply human-readable names to dimension columns
+        # Apply human-readable names to columns with codelists
         for column in formatted_df.columns:
             if column in self._codelist and self._codelist[column] is not None:
                 formatted_df[column] = formatted_df[column].apply(
                     lambda x: self._get_readable_name(column, x)
                 )
 
-        # Rename columns to human-readable names in the specified language
+        # Rename columns to their human-readable names
         column_rename_map = {
             column: self._codelist[column].name.localizations[self.language]
             for column in formatted_df.columns
@@ -59,36 +79,43 @@ class ILOStatQueryResult:
 
     @property
     def codelist(self):
+        """Retrieve the codelist for dimension values."""
         return self._codelist
 
     @property
     def sdmx_data(self):
+        """Retrieve the raw SDMX data object."""
         return self._sdmx_data
 
 
 if __name__ == "__main__":
+    # Import the query class (assumed to be in a local module)
     from ._query import ILOStatQuery
 
     # Define parameters for a sample query
     df = "DF_UNE_2EAP_SEX_AGE_RT"
 
+    # Specify dimensions for filtering the query
     dimensions = {
         "SEX": "SEX_T+SEX_M+SEX_F",
         "AGE": "AGE_YTHADULT_YGE15",
         "TIME_PERIOD": "9",
         "REF_AREA": "X01+ITA",
     }
+
+    # Define query parameters such as time range
     params = {"startPeriod": "2020", "endPeriod": "2026"}
 
-    # Instantiate and run the query
+    # Instantiate the ILOStatQuery object with parameters
     query = ILOStatQuery(
         language="en", dataflow=df, dimensions=dimensions, params=params
     )
 
-    # Execute the query
+    # Execute the query to retrieve the result
     result = query.data()
 
-    # Get the dataframe of the data
+    # Extract the formatted DataFrame
     dataframe = result.df
 
+    # Print the formatted DataFrame
     print(dataframe)
