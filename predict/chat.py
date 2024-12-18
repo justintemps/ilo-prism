@@ -1,45 +1,93 @@
 import pandas as pd
 from ._client import HuggingFaceClient
+import numpy as np
 
 
 class ChatBot(HuggingFaceClient):
     def __init__(self, model):
         super().__init__(model)
 
-        self.SYSTEM_MESSAGE = "Generate a concise summary of the labour statistics data retrieved from the International Labour Organization's ILOSTAT database, using a factual and objective tone. Focus strictly on patterns, trends, figures, and relationships evident in the data table, without providing contextual explanations or interpretations beyond the data itself. Highlight notable changes in values, any observable trends over time, and relevant statistical shifts as presented in the data."
-
         self.MAX_TOKENS = 1000
 
-        self.TEMPERATURE = 0.7
+        self.TEMPERATURE = 1
 
-    def _serialize_dataframe(self, df: pd.DataFrame):
+    def key_metrics(self, df: pd.DataFrame):
+        start_period = df["TIME_PERIOD"].iloc[0]
+        start_value = df["value"].iloc[0]
+        end_period = df["TIME_PERIOD"].iloc[-1]
+        end_value = df["value"].iloc[-1]
+        max_year = df["TIME_PERIOD"].iloc[df["value"].idxmax()]
+        max_value = df["value"].max()
+        min_year = df["TIME_PERIOD"].iloc[df["value"].idxmin()]
+        min_value = df["value"].min()
+        range_value = max_value - min_value
+        return {
+            "start_period": start_period,
+            "end_period": end_period,
+            "start_value": start_value,
+            "end_value": end_value,
+            "max_year": max_year,
+            "max_value": max_value,
+            "min_year": min_year,
+            "min_value": min_value,
+            "range_value": range_value,
+        }
 
-        # Get column headers
-        headers = " | ".join(df.columns)
+    def general_summary(self, df: pd.DataFrame, key_metrics: dict):
+        start_value = key_metrics["start_value"]
+        end_value = key_metrics["end_value"]
+        range_value = key_metrics["range_value"]
 
-        # Get rows as strings
-        rows = [" | ".join(map(str, row)) for row in df.values]
+        direction_changes = np.sign(df["value"].diff()).diff().fillna(0).abs().sum()
+        # Analyze general trend
+        if (
+            direction_changes > len(df) * 0.3
+        ):  # More than 30% changes imply fluctuations
+            trend = "The values fluctuate significantly over time."
+        elif start_value < end_value:
+            trend = "The values show an overall upward trend."
+        elif start_value > end_value:
+            trend = "The values show an overall downward trend."
+        elif range_value < 0.1:  # Small range implies stability
+            trend = "The values remain relatively stable over time."
+        else:
+            trend = "The values show moderate variations over time."
+        return trend
 
-        # Combine headers and rows
-        serialized_table = f"| {headers} |\n" + "\n".join(
-            [f"| {row} |" for row in rows]
-        )
-        return serialized_table
-
-    def _format_message(
+    def prompt(
         self,
-        df: pd.DataFrame,
         area_label: str,
         data_label: str,
         data_description: str,
+        key_metrics: dict,
+        general_summary: str,
     ):
+        # Construct Prompt for LLM
+        prompt = f"""
+        Generate a concise summary of the following labour statistics retrieved from the International Labour Organization's ILOSTAT database, using a factual and objective tone. Focus strictly on patterns, trends, figures, and relationships evident in the data.
 
-        table = self._serialize_dataframe(df)
+        **Context**:
+        - Geographic Area: {area_label}
+        - Dataset: {data_label}
+        - Description: {data_description}
 
-        return f"""The dataset represents: {data_label}
-                Geographic scope: {area_label}
-                Dataset description: {data_description}
-                Table data overview: {table}"""
+        **Key Metrics**:
+        - Start: {key_metrics["start_period"]} = {key_metrics["start_value"]}
+        - End: {key_metrics["end_period"]} = {key_metrics["end_value"]}
+        - Peak: {key_metrics["max_year"]} = {key_metrics["max_value"]} (highest point)
+        - Minimum: {key_metrics["min_year"]} = {key_metrics["min_value"]} (lowest point)
+
+        **Observation**:
+        {general_summary}
+
+        **Instructions**:
+        1. Summarize the general trend of the data in a paragraph.
+        2. Focus on overall patterns, key increases or decreases, peaks, and minimums.
+        3. Use clear and concise language suitable for a general audience.
+
+        Your response should be coherent, factual, and easy to understand.
+        """
+        return prompt
 
     def respond(
         self,
@@ -49,17 +97,18 @@ class ChatBot(HuggingFaceClient):
         data_description=str,
     ):
         # Initialize the messages with the first system message
-        messages = [{"role": "system", "content": self.SYSTEM_MESSAGE}]
+        messages = [{"role": "system", "content": "You are a helpful chatbot"}]
 
-        user_message = self._format_message(
-            df=df,
-            area_label=area_label,
-            data_label=data_label,
-            data_description=data_description,
+        key_metrics = self.key_metrics(df)
+
+        general_summary = self.general_summary(df, key_metrics)
+
+        prompt = self.prompt(
+            area_label, data_label, data_description, key_metrics, general_summary
         )
 
         # Adds the current message from the user
-        messages.append({"role": "user", "content": user_message})
+        messages.append({"role": "user", "content": prompt})
 
         # Initialize the response
         response = ""

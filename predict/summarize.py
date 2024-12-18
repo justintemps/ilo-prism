@@ -61,11 +61,11 @@ class Summarizer(HuggingFaceClient):
     ):
         # Construct Prompt for LLM
         prompt = f"""
-        You are tasked with summarizing the following time series data for a human reader.
+        Generate a concise summary of the following labour statistics retrieved from the International Labour Organization's ILOSTAT database, using a factual and objective tone. Focus strictly on patterns, trends, figures, and relationships evident in the data.
 
         **Context**:
-        - Area: {area_label}
-        - Indicator: {data_label}
+        - Geographic Area: {area_label}
+        - Dataset: {data_label}
         - Description: {data_description}
 
         **Key Metrics**:
@@ -97,7 +97,9 @@ class Summarizer(HuggingFaceClient):
             area_label, data_label, data_description, key_metrics, general_summary
         )
 
-        return prompt
+        response = self._client.summarization(text=prompt)
+
+        return response.summary_text
 
 
 if __name__ == "__main__":
