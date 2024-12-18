@@ -102,7 +102,7 @@ class ChatBot(HuggingFaceClient):
         # Add projections if future data exists
         if key_metrics["future_data"]:
             prompt += "\n"
-            prompt += f"""   **Future Projections**"""
+            prompt += f"   **Future Projections**"
             prompt += "\n"
             for year, value in key_metrics["future_data"]:
                 trend = "increase" if value > key_metrics["end_value"] else "decrease"
