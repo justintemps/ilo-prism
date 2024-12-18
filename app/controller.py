@@ -235,10 +235,16 @@ class AppController:
         self, area: str, dataflow: str, dataflow_description: str, df: pd.DataFrame
     ):
 
+        # Get the dataflow label
+        dataflow_label = ilostat.get_dataflow_label(dataflow)
+
+        # Get the area label
+        area_label = ilostat.get_area_label(area)
+
         response = self._summarizer.respond(
             df=df,
-            area_label=area,
-            data_label=dataflow,
+            area_label=area_label,
+            data_label=dataflow_label,
             data_description=dataflow_description,
         )
 

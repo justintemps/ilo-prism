@@ -9,15 +9,23 @@ class Summarizer(HuggingFaceClient):
         super().__init__(model)
 
     def key_metrics(self, df: pd.DataFrame):
+        start_period = df["TIME_PERIOD"].iloc[0]
         start_value = df["value"].iloc[0]
+        end_period = df["TIME_PERIOD"].iloc[-1]
         end_value = df["value"].iloc[-1]
+        max_year = df["TIME_PERIOD"].iloc[df["value"].idxmax()]
         max_value = df["value"].max()
+        min_year = df["TIME_PERIOD"].iloc[df["value"].idxmin()]
         min_value = df["value"].min()
         range_value = max_value - min_value
         return {
+            "start_period": start_period,
+            "end_period": end_period,
             "start_value": start_value,
             "end_value": end_value,
+            "max_year": max_year,
             "max_value": max_value,
+            "min_year": min_year,
             "min_value": min_value,
             "range_value": range_value,
         }
@@ -61,8 +69,8 @@ class Summarizer(HuggingFaceClient):
         - Description: {data_description}
 
         **Key Metrics**:
-        - Start: {key_metrics["start_year"]} = {key_metrics["start_value"]}
-        - End: {key_metrics["end_year"]} = {key_metrics["end_value"]}
+        - Start: {key_metrics["start_period"]} = {key_metrics["start_value"]}
+        - End: {key_metrics["end_period"]} = {key_metrics["end_value"]}
         - Peak: {key_metrics["max_year"]} = {key_metrics["max_value"]} (highest point)
         - Minimum: {key_metrics["min_year"]} = {key_metrics["min_value"]} (lowest point)
 
@@ -70,7 +78,7 @@ class Summarizer(HuggingFaceClient):
         {general_summary}
 
         **Instructions**:
-        1. Summarize the general trend of the data in 2-3 sentences.
+        1. Summarize the general trend of the data in a paragraph.
         2. Focus on overall patterns, key increases or decreases, peaks, and minimums.
         3. Use clear and concise language suitable for a general audience.
 
@@ -83,5 +91,54 @@ class Summarizer(HuggingFaceClient):
     ):
         key_metrics = self.key_metrics(df)
 
-        # general_summary = self.general_summary(df, key_metrics)
-        print(key_metrics)
+        general_summary = self.general_summary(df, key_metrics)
+
+        prompt = self.prompt(
+            area_label, data_label, data_description, key_metrics, general_summary
+        )
+
+        return prompt
+
+
+if __name__ == "__main__":
+
+    from app import SUMMARIZATION_MODEL
+
+    summarizer = Summarizer(model=SUMMARIZATION_MODEL)
+
+    data = {
+        "Reference Area": {
+            0: "World",
+            1: "World",
+            2: "World",
+        },
+        "Classification: SEX": {
+            0: "Total",
+            1: "Total",
+            2: "Total",
+        },
+        "Classification: AGE": {
+            0: "15+",
+            1: "15+",
+            2: "15+",
+        },
+        "TIME_PERIOD": {
+            0: "1991",
+            1: "1992",
+            2: "1993",
+        },
+        "value": {
+            0: 5.1,
+            1: 5.3,
+            2: 5.5,
+        },
+    }
+
+    dataframe = pd.DataFrame.from_dict(data)
+
+    key_metrics = summarizer.key_metrics(dataframe)
+
+    general_summary = summarizer.general_summary(dataframe, key_metrics)
+
+    print(key_metrics)
+    print(general_summary)
