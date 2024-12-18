@@ -1,6 +1,7 @@
 import pandas as pd
 from ._client import HuggingFaceClient
 import numpy as np
+from datetime import datetime
 
 
 class ChatBot(HuggingFaceClient):
@@ -9,18 +10,35 @@ class ChatBot(HuggingFaceClient):
 
         self.MAX_TOKENS = 1000
 
-        self.TEMPERATURE = 0.2
+        self.TEMPERATURE = 0.7
 
     def _key_metrics(self, df: pd.DataFrame):
+        current_year = datetime.now().year
+
+        # Convert TIME_PERIOD to numerical values for comparison
+        df["TIME_PERIOD"] = pd.to_numeric(df["TIME_PERIOD"], errors="coerce")
+
+        # Find the latest year on or before the current year
+        valid_years = df[df["TIME_PERIOD"] <= current_year]
+        if not valid_years.empty:
+            end_period = valid_years["TIME_PERIOD"].iloc[-1]
+            end_value = valid_years["value"].iloc[-1]
+        else:
+            end_period = None
+            end_value = None
+
+        # Extract data for years after the current year
+        future_years = df[df["TIME_PERIOD"] > current_year]
+        future_data = list(zip(future_years["TIME_PERIOD"], future_years["value"]))
+
         start_period = df["TIME_PERIOD"].iloc[0]
         start_value = df["value"].iloc[0]
-        end_period = df["TIME_PERIOD"].iloc[-1]
-        end_value = df["value"].iloc[-1]
         max_year = df["TIME_PERIOD"].iloc[df["value"].idxmax()]
         max_value = df["value"].max()
         min_year = df["TIME_PERIOD"].iloc[df["value"].idxmin()]
         min_value = df["value"].min()
         range_value = max_value - min_value
+
         return {
             "start_period": start_period,
             "end_period": end_period,
@@ -31,6 +49,7 @@ class ChatBot(HuggingFaceClient):
             "min_year": min_year,
             "min_value": min_value,
             "range_value": range_value,
+            "future_data": future_data,
         }
 
     def _general_summary(self, df: pd.DataFrame, key_metrics: dict):
@@ -59,9 +78,7 @@ class ChatBot(HuggingFaceClient):
         df,
         area_label: str,
         data_label: str,
-        data_description: str,
     ):
-
         # Get the key metrics from the dataframe
         key_metrics = self._key_metrics(df)
 
@@ -69,24 +86,33 @@ class ChatBot(HuggingFaceClient):
         general_summary = self._general_summary(df, key_metrics)
 
         # Construct Prompt for LLM
-        prompt = f"""
-        Generate a concise summary of the following labour statistics retrieved from the International Labour Organization's ILOSTAT database, using a factual and objective tone. Focus strictly on patterns, trends, figures, and relationships evident in the data.
+        prompt = f"""Generate a concise summary of the following labour statistics using a factual and objective tone. Focus only on describing the statistical trend in the data without trying to explain why it changed over time.
 
-        **Context**:
+        **Context**
         - Geographic Area: {area_label}
         - Dataset: {data_label}
-        - Description: {data_description}
 
-        **Key Metrics**:
+        **Key Metrics**
         - Start: {key_metrics["start_period"]} = {key_metrics["start_value"]}
-        - End: {key_metrics["end_period"]} = {key_metrics["end_value"]}
         - Peak: {key_metrics["max_year"]} = {key_metrics["max_value"]} (highest point)
         - Minimum: {key_metrics["min_year"]} = {key_metrics["min_value"]} (lowest point)
+        - End: {key_metrics["end_period"]} = {key_metrics["end_value"]}
+        """
 
+        # Add projections if future data exists
+        if key_metrics["future_data"]:
+            prompt += "\n"
+            prompt += f"""   **Future Projections**"""
+            prompt += "\n"
+            for year, value in key_metrics["future_data"]:
+                trend = "increase" if value > key_metrics["end_value"] else "decrease"
+                prompt += f"- {year} = {value} ({trend})\n"
+
+        prompt += f"""
         **Observation**:
         - {general_summary}
 
-        **Instructions**:
+        **Instructions**
         1. Summarize the general trend of the data in a paragraph.
         2. Focus on overall patterns, key increases or decreases, peaks, and minimums.
         3. Use clear and concise language suitable for a general audience.

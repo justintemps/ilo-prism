@@ -189,7 +189,7 @@ with gr.Blocks(fill_height=True) as demo:
             with gr.Tab("✍️ Prompt"):
                 prompt_textarea.render()
 
-            with gr.Tab("✨ Chat completion"):
+            with gr.Tab("✨ Chat completion", interactive=True):
                 chat_completion_textarea.render()
                 get_chat_completion_button.render()
 
@@ -243,7 +243,6 @@ with gr.Blocks(fill_height=True) as demo:
         inputs=[
             areas_dropdown,
             dataflows_dropdown,
-            dataflow_description,
             output_dataframe,
         ],
         outputs=prompt_textarea,

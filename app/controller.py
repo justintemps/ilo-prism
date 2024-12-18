@@ -209,9 +209,7 @@ class AppController:
 
             return plot
 
-    def set_prompt(
-        self, area: str, dataflow: str, dataflow_description: str, df: pd.DataFrame
-    ):
+    def set_prompt(self, area: str, dataflow: str, df: pd.DataFrame):
 
         # Get the dataflow label
         data_label = ilostat.get_dataflow_label(dataflow)
@@ -220,7 +218,7 @@ class AppController:
         area_label = ilostat.get_area_label(area)
 
         # Get a response from the chatbot
-        prompt = self._chatbot.prompt(df, area_label, data_label, dataflow_description)
+        prompt = self._chatbot.prompt(df, area_label, data_label)
 
         return prompt
 
