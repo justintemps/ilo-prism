@@ -47,11 +47,8 @@ get_chat_completion_button = gr.Button("Start chat completion")
 # Output textarea for chat completion
 chat_completion_textarea = gr.TextArea(label="Click button to start chat completion")
 
-# Output textarea for summarization
-summarization_textarea = gr.TextArea(label="Click button to start summarization")
-
-# Button to generate summarization
-get_summarization_button = gr.Button("Start summarization")
+# Ouput textarea for the prompt
+prompt_textarea = gr.TextArea(label="The prompt for the model")
 
 
 with gr.Blocks(fill_height=True) as demo:
@@ -189,13 +186,12 @@ with gr.Blocks(fill_height=True) as demo:
                 gr.Markdown("### Description of the data from ILOSTAT")
                 dataflow_description.render()
 
+            with gr.Tab("✍️ Prompt"):
+                prompt_textarea.render()
+
             with gr.Tab("✨ Chat completion"):
                 chat_completion_textarea.render()
                 get_chat_completion_button.render()
-
-            with gr.Tab("✨ Summarization"):
-                summarization_textarea.render()
-                get_summarization_button.render()
 
     # ===========================
     # Component Event Handlers
@@ -241,28 +237,23 @@ with gr.Blocks(fill_height=True) as demo:
         outputs=dataflow_description,
     )
 
+    # Update the generated prompt but oly when the dataframe is updated
+    output_dataframe.change(
+        control.set_prompt,
+        inputs=[
+            areas_dropdown,
+            dataflows_dropdown,
+            dataflow_description,
+            output_dataframe,
+        ],
+        outputs=prompt_textarea,
+    )
+
     # Event to handle chat completion button click, processing the output dataframe and outputting summary
     get_chat_completion_button.click(
         fn=control.chat_completion,
-        inputs=[
-            areas_dropdown,
-            dataflows_dropdown,
-            dataflow_description,
-            output_dataframe,
-        ],
+        inputs=prompt_textarea,
         outputs=chat_completion_textarea,
-    )
-
-    # Event to handle summarization button click, processing the output dataframe and outputting summary
-    get_summarization_button.click(
-        fn=control.summarization,
-        inputs=[
-            areas_dropdown,
-            dataflows_dropdown,
-            dataflow_description,
-            output_dataframe,
-        ],
-        outputs=summarization_textarea,
     )
 
 

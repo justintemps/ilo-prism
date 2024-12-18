@@ -9,9 +9,9 @@ class ChatBot(HuggingFaceClient):
 
         self.MAX_TOKENS = 1000
 
-        self.TEMPERATURE = 1
+        self.TEMPERATURE = 0.2
 
-    def key_metrics(self, df: pd.DataFrame):
+    def _key_metrics(self, df: pd.DataFrame):
         start_period = df["TIME_PERIOD"].iloc[0]
         start_value = df["value"].iloc[0]
         end_period = df["TIME_PERIOD"].iloc[-1]
@@ -33,7 +33,7 @@ class ChatBot(HuggingFaceClient):
             "range_value": range_value,
         }
 
-    def general_summary(self, df: pd.DataFrame, key_metrics: dict):
+    def _general_summary(self, df: pd.DataFrame, key_metrics: dict):
         start_value = key_metrics["start_value"]
         end_value = key_metrics["end_value"]
         range_value = key_metrics["range_value"]
@@ -56,12 +56,18 @@ class ChatBot(HuggingFaceClient):
 
     def prompt(
         self,
+        df,
         area_label: str,
         data_label: str,
         data_description: str,
-        key_metrics: dict,
-        general_summary: str,
     ):
+
+        # Get the key metrics from the dataframe
+        key_metrics = self._key_metrics(df)
+
+        # Create a general summary about the dataframe
+        general_summary = self._general_summary(df, key_metrics)
+
         # Construct Prompt for LLM
         prompt = f"""
         Generate a concise summary of the following labour statistics retrieved from the International Labour Organization's ILOSTAT database, using a factual and objective tone. Focus strictly on patterns, trends, figures, and relationships evident in the data.
@@ -78,7 +84,7 @@ class ChatBot(HuggingFaceClient):
         - Minimum: {key_metrics["min_year"]} = {key_metrics["min_value"]} (lowest point)
 
         **Observation**:
-        {general_summary}
+        - {general_summary}
 
         **Instructions**:
         1. Summarize the general trend of the data in a paragraph.
@@ -89,23 +95,9 @@ class ChatBot(HuggingFaceClient):
         """
         return prompt
 
-    def respond(
-        self,
-        df: pd.DataFrame,
-        area_label: str,
-        data_label: str,
-        data_description=str,
-    ):
+    def respond(self, prompt: str):
         # Initialize the messages with the first system message
         messages = [{"role": "system", "content": "You are a helpful chatbot"}]
-
-        key_metrics = self.key_metrics(df)
-
-        general_summary = self.general_summary(df, key_metrics)
-
-        prompt = self.prompt(
-            area_label, data_label, data_description, key_metrics, general_summary
-        )
 
         # Adds the current message from the user
         messages.append({"role": "user", "content": prompt})

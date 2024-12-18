@@ -209,43 +209,22 @@ class AppController:
 
             return plot
 
-    def chat_completion(
-        self,
-        area: str,
-        dataflow: str,
-        dataflow_description: str,
-        df: pd.DataFrame,
-    ) -> Generator[str | Any, Any, None]:
+    def set_prompt(
+        self, area: str, dataflow: str, dataflow_description: str, df: pd.DataFrame
+    ):
+
         # Get the dataflow label
-        dataflow_label = ilostat.get_dataflow_label(dataflow)
+        data_label = ilostat.get_dataflow_label(dataflow)
 
         # Get the area label
         area_label = ilostat.get_area_label(area)
 
         # Get a response from the chatbot
-        for response in self._chatbot.respond(
-            df=df,
-            area_label=area_label,
-            data_label=dataflow_label,
-            data_description=dataflow_description,
-        ):
+        prompt = self._chatbot.prompt(df, area_label, data_label, dataflow_description)
+
+        return prompt
+
+    def chat_completion(self, prompt: str) -> Generator[str | Any, Any, None]:
+        # Get a response from the chatbot
+        for response in self._chatbot.respond(prompt):
             yield response
-
-    def summarization(
-        self, area: str, dataflow: str, dataflow_description: str, df: pd.DataFrame
-    ):
-
-        # Get the dataflow label
-        dataflow_label = ilostat.get_dataflow_label(dataflow)
-
-        # Get the area label
-        area_label = ilostat.get_area_label(area)
-
-        response = self._summarizer.respond(
-            df=df,
-            area_label=area_label,
-            data_label=dataflow_label,
-            data_description=dataflow_description,
-        )
-
-        return response
