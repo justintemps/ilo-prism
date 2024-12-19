@@ -125,7 +125,7 @@ class ChatBot(HuggingFaceClient):
 - {general_summary}
 
 **Instructions**
-1. Summarize the general trend of the data in a paragraph.
+1. Summarize the general trend of the data in a paragraph of four or five sentences.
 2. Focus on overall patterns, key increases or decreases, peaks, and minimums.
 3. Use clear and concise language suitable for a general audience.
 

@@ -2,7 +2,7 @@ import os
 from ilostat.ilostat import ILOStat
 
 # Chatbot Model
-CHATBOT_MODEL = "meta-llama/Llama-3.2-3B-Instruct"
+CHATBOT_MODEL = "meta-llama/Meta-Llama-3-8B-Instruct"
 
 # Summarization Model
 SUMMARIZATION_MODEL = "facebook/bart-large-cnn"
