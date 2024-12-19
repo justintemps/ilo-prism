@@ -1,4 +1,4 @@
-Generate a concise summary of the following labour statistics using a factual and objective tone. Focus only on describing the statistical trend in the data without trying to explain why it changed over time.
+Generate a concise summary of the following labour statistics using a factual and objective tone. Focus only on describing the statistical trends in the data without trying to explain why it changed over time.
 
 **Context**
 
@@ -10,7 +10,8 @@ Generate a concise summary of the following labour statistics using a factual an
 - Start: 1991 = 5.1
 - Peak: 2020 = 6.6 (highest point)
 - Minimum: 2024 = 5 (lowest point)
-- End: 2024 = 5
+- End: 2024 = 5.0
+
 - Projection: 2025 = 5.1 (increase)
 - Projection: 2026 = 4.9 (decrease)
 
