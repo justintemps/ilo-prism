@@ -2,6 +2,15 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
+"""
+@TODO: The next step is to replace key metrics the way we have it now with a blow by blow. Basically we'll use find_peaks from scipy.signal to identify both the peaks and the valleys. We'll then put them in order to tell a story like the one we have in prompt.
+
+peaks, _ = find_peaks(df['y_smooth'])
+valleys, _ = find_peaks(-df['y_smooth'])  # Invert data for valleys
+
+This should be added to DataDescriptor, not ChatBot.
+"""
+
 
 class TimeValue:
     def __init__(self, time: int, value: float, change: str = None):

@@ -4,6 +4,15 @@ from ._descriptor import DataDescriptor
 import numpy as np
 from scipy.signal import find_peaks
 
+"""
+@TODO: The next step is to replace key metrics the way we have it now with a blow by blow. Basically we'll use find_peaks from scipy.signal to identify both the peaks and the valleys. We'll then put them in order to tell a story like the one we have in prompt.
+
+peaks, _ = find_peaks(df['y_smooth'])
+valleys, _ = find_peaks(-df['y_smooth'])  # Invert data for valleys
+
+This should be added to DataDescriptor, not ChatBot.
+"""
+
 
 class ChatBot(HuggingFaceClient):
     def __init__(self, model):
