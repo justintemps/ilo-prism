@@ -172,7 +172,7 @@ class AppController:
 
         return result.dataframe
 
-    def set_chart(self, df: pd.DataFrame):
+    def render_chart(self, df: pd.DataFrame):
         """
         Generate a chart based on a given DataFrame.
 
@@ -182,6 +182,7 @@ class AppController:
         Returns:
         - gr.Plot: A Gradio plot object displaying the data.
         """
+
         if "value" in df.columns:
             # Replace empty strings with NaN for consistency
             df["value"] = df["value"].replace("", np.nan, regex=False)
@@ -208,6 +209,11 @@ class AppController:
             plt.close(fig)
 
             return plot
+
+    def set_chart(self, df: pd.DataFrame):
+        # Create a copy of the DataFrame to avoid mutating the original
+        df_copy = df.copy()
+        return self.render_chart(df_copy)
 
     def set_prompt(self, area: str, dataflow: str, df: pd.DataFrame):
 
