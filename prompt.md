@@ -6,7 +6,7 @@ Generate a concise summary of the following labour statistics from the Internati
 - Dataset: Unemployment rate by sex and age -- ILO modelled estimates, May 2024
 - Reference Year: 2024
 
-**Key Metrics**
+**Key metrics**
 
 - Start: 1991 = 5.1
 - Increase: 1998 = 6.2

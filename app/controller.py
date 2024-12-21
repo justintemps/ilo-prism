@@ -3,7 +3,6 @@ from ilostat.ilostat import ILOStat
 from . import ilostat, CHATBOT_MODEL, SUMMARIZATION_MODEL
 from ._dim_controller import DimensionController
 from predict.chat import ChatBot
-from predict.summarize import Summarizer
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,7 +30,6 @@ class AppController:
         self._ilostat = ilostat
         self.dimension_controller = DimensionController
         self._chatbot = ChatBot(model=CHATBOT_MODEL)
-        self._summarizer = Summarizer(model=SUMMARIZATION_MODEL)
 
     def set_dataflows(self, area: str):
         """

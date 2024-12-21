@@ -2,16 +2,6 @@ import pandas as pd
 from ._client import HuggingFaceClient
 from ._descriptor import DataDescriptor
 import numpy as np
-from scipy.signal import find_peaks
-
-"""
-@TODO: The next step is to replace key metrics the way we have it now with a blow by blow. Basically we'll use find_peaks from scipy.signal to identify both the peaks and the valleys. We'll then put them in order to tell a story like the one we have in prompt.
-
-peaks, _ = find_peaks(df['y_smooth'])
-valleys, _ = find_peaks(-df['y_smooth'])  # Invert data for valleys
-
-This should be added to DataDescriptor, not ChatBot.
-"""
 
 
 class ChatBot(HuggingFaceClient):
@@ -21,6 +11,75 @@ class ChatBot(HuggingFaceClient):
         self.MAX_TOKENS = 1000
 
         self.TEMPERATURE = 0.7
+
+    def print_metrics(self, data: DataDescriptor) -> str:
+        df = data.milestones
+
+        # Find start and end points
+        start = f"Start: {data.start.time} = {data.start.value}"
+        end = f"End: {data.end.time} = {data.end.value}"
+
+        # Track inflection points (increases and decreases)
+        summary_lines = []
+
+        for i in range(1, len(df)):
+            previous_value = df["value"].iloc[i - 1]
+            current_value = df["value"].iloc[i]
+            year = df["TIME_PERIOD"].iloc[i]
+
+            if current_value > previous_value:
+                summary_lines.append(f"Increase: {year} = {current_value}")
+            elif current_value < previous_value:
+                summary_lines.append(f"Decrease: {year} = {current_value}")
+
+        # Mark highest and lowest points
+        for i, line in enumerate(summary_lines):
+            if str(data.max.value) in line:
+                summary_lines[i] += " (Highest value)"
+            if str(data.min.value) in line:
+                summary_lines[i] += " (Lowest value)"
+
+        # Combine all parts
+        return "\n".join([start] + summary_lines + [end])
+
+    def print_projections(self, data: DataDescriptor) -> str:
+        projections_df = data.projections
+
+        if projections_df.empty:
+            return "No projections available."
+
+        # Determine change type (Increase, Decrease, No change)
+        def determine_change(current, previous):
+            if current > previous:
+                return "Increase"
+            elif current < previous:
+                return "Decrease"
+            else:
+                return "No change"
+
+        # Initialize result lines
+        result_lines = []
+
+        # Get the last milestone value for comparison with the first projection
+        last_milestone_value = data.milestones["value"].iloc[-1]
+        first_projection_value = projections_df["value"].iloc[0]
+        initial_change = determine_change(first_projection_value, last_milestone_value)
+
+        # Add the first line
+        result_lines.append(
+            f"Projection: {projections_df['TIME_PERIOD'].iloc[0]} = {first_projection_value} ({initial_change})"
+        )
+
+        # Process subsequent projections
+        for i in range(1, len(projections_df)):
+            current_value = projections_df["value"].iloc[i]
+            previous_value = projections_df["value"].iloc[i - 1]
+            year = projections_df["TIME_PERIOD"].iloc[i]
+            change = determine_change(current_value, previous_value)
+
+            result_lines.append(f"Projection: {year} = {current_value} ({change})")
+
+        return "\n".join(result_lines)
 
     def prompt(self, df, area_label: str, data_label: str):
         """
@@ -44,35 +103,20 @@ class ChatBot(HuggingFaceClient):
 - Geographic Area: {area_label}
 - Dataset: {data_label}
 - Reference Year: {data.current_year}
-
-**Key Metrics**
-- Start: {data.start.time} = {data.start.value}
-- Peak: {data.max.time} = {data.max.value} (highest point)
-- Minimum: {data.min.time} = {data.min.value} (lowest point)
-- End: {data.end.time} = {data.end.value}
 """
 
-        # Add projections to Key Metrics if available
-        if data.projections:
-            projections = "\n".join(
-                f"- Projection: {projection.time} = {projection.value} ("
-                + (
-                    "increase"
-                    if projection.value > data.end.value
-                    else (
-                        "decrease" if projection.value < data.end.value else "No change"
-                    )
-                )
-                + ")"
-                for projection in data.projections
-            )
-            prompt += projections
+        # Append key metrics
+        prompt += f"""
+**Key Metrics**
+{self.print_metrics(data)}
+{self.print_projections(data)}
+"""
 
         # Append observation and instructions
         prompt += f"""
 
-**Observation**:
-- {data.summary}
+**Observation**
+- {data.trend}
 
 **Instructions**
 1. Summarize the general trend of the data in a single paragraph of four or five sentences.
@@ -105,8 +149,19 @@ Your response should be coherent, factual, and easy to understand.
             # The current token
             token = msg.choices[0].delta.content
 
-            # The response from the current foken
+            # The response from the current token
             response += token
 
             # Yield the next part of the response
             yield response
+
+
+if __name__ == "__main__":
+    from app.defaults import AppDefaults
+
+    initial = AppDefaults()
+
+    data = DataDescriptor(df=initial.dataframe)
+
+    print(ChatBot.print_metrics(data))
+    print(ChatBot.print_projections(data))

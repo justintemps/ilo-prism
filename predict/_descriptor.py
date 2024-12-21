@@ -1,15 +1,7 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime
-
-"""
-@TODO: The next step is to replace key metrics the way we have it now with a blow by blow. Basically we'll use find_peaks from scipy.signal to identify both the peaks and the valleys. We'll then put them in order to tell a story like the one we have in prompt.
-
-peaks, _ = find_peaks(df['y_smooth'])
-valleys, _ = find_peaks(-df['y_smooth'])  # Invert data for valleys
-
-This should be added to DataDescriptor, not ChatBot.
-"""
+from scipy.signal import find_peaks
 
 
 class TimeValue:
@@ -29,7 +21,7 @@ class DataDescriptor:
 
         # Separate past years from projections
         self.past_years = df[df["TIME_PERIOD"] <= self.current_year]
-        self.future_years = df[df["TIME_PERIOD"] > self.current_year]
+        self.projections = df[df["TIME_PERIOD"] > self.current_year]
 
         # Get the start period of the past years
         self.start = TimeValue(
@@ -60,7 +52,7 @@ class DataDescriptor:
         return self.max.value - self.min.value
 
     @property
-    def summary(self):
+    def trend(self):
         direction_changes = (
             np.sign(self._df["value"].diff()).diff().fillna(0).abs().sum()
         )
@@ -80,10 +72,36 @@ class DataDescriptor:
         return trend
 
     @property
-    def projections(self):
-        if self.future_years is None or self.future_years.empty:
-            return None
-        return [
-            TimeValue(time=row["TIME_PERIOD"], value=row["value"])
-            for _, row in self.future_years.iterrows()
-        ]
+    def peaks(self):
+        peaks, _ = find_peaks(self.past_years["value"])
+        return self._df.loc[peaks]
+
+    @property
+    def valleys(self) -> list[float]:
+        valleys, _ = find_peaks(-self.past_years["value"])
+        return self._df.loc[valleys]
+
+    @property
+    def inflections(self) -> list[float]:
+        return pd.concat([self.peaks, self.valleys]).sort_values("TIME_PERIOD")
+
+    @property
+    def milestones(self) -> pd.DataFrame:
+        # Add the first and last values to the inflections
+        summary = self.inflections.copy()
+        first_row = self.past_years.iloc[0]
+        last_row = self.past_years.iloc[-1]
+        summary = pd.concat([summary, first_row.to_frame().T, last_row.to_frame().T])
+        summary = summary.sort_values("TIME_PERIOD")
+
+        return summary
+
+
+if __name__ == "__main__":
+    from app.defaults import AppDefaults
+
+    initial = AppDefaults()
+
+    data = DataDescriptor(df=initial.dataframe)
+
+    print(data.milestones)
