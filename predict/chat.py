@@ -153,15 +153,45 @@ Your response should be coherent, factual, and easy to understand.
             response += token
 
             # Yield the next part of the response
-            yield response
+            yield token
 
 
 if __name__ == "__main__":
     from app.defaults import AppDefaults
+    from ilostat.ilostat import ILOStat
 
+    # Get the initial settings
     initial = AppDefaults()
 
-    data = DataDescriptor(df=initial.dataframe)
+    # Initialize the ILOStat client
+    ilostat = ILOStat("en")
 
-    print(ChatBot.print_metrics(data))
-    print(ChatBot.print_projections(data))
+    # Get the area label
+    area_label = ilostat.get_area_label(initial.area)
+
+    # Get the dataflow label
+    data_label = ilostat.get_dataflow_label(initial.dataflow)
+
+    # Set a default model for the chatbot
+    model = "meta-llama/Meta-Llama-3-8B-Instruct"
+
+    # Instantiate the chatbot
+    chatbot = ChatBot(model)
+
+    # Create a data descriptor
+    descriptor = DataDescriptor(initial.dataframe)
+
+    # Print the prompt
+    prompt = chatbot.prompt(initial.dataframe, area_label, data_label)
+
+    # Gather the response
+    response_paragraph = []
+
+    # Generate a response
+    for response in chatbot.respond(prompt):
+        # Append only the new, non-repeated portion
+        response_paragraph.append(response)
+
+        # Join fragments into a single paragraph and print
+    print("".join(response_paragraph).strip())
+    print("-" * 50)
