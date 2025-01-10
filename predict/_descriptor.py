@@ -86,6 +86,10 @@ class DataDescriptor:
         return pd.concat([self.peaks, self.valleys]).sort_values("TIME_PERIOD")
 
     @property
+    def standard_deviation(self) -> float:
+        return self.past_years["value"].std()
+
+    @property
     def milestones(self) -> pd.DataFrame:
         # Add the first and last values to the inflections
         summary = self.inflections.copy()

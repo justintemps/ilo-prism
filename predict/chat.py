@@ -27,10 +27,27 @@ class ChatBot(HuggingFaceClient):
             current_value = df["value"].iloc[i]
             year = df["TIME_PERIOD"].iloc[i]
 
+            standardized_change = (
+                abs(previous_value - current_value) / data.standard_deviation
+            )
+
+            magnitude = ""
+
+            if standardized_change > 3:
+                magnitude = "Dramatic"
+            elif 2 < standardized_change <= 3:
+                magnitude = "Substantial"
+            elif 1 < standardized_change <= 2:
+                magnitude = "Moderate"
+            elif 0.5 < standardized_change <= 1:
+                magnitude = "Modest"
+            else:
+                magnitude = "Slight"
+
             if current_value > previous_value:
-                summary_lines.append(f"Increase: {year} = {current_value}")
+                summary_lines.append(f"{magnitude} increase: {year} = {current_value}")
             elif current_value < previous_value:
-                summary_lines.append(f"Decrease: {year} = {current_value}")
+                summary_lines.append(f"{magnitude} decrease: {year} = {current_value}")
 
         # Mark highest and lowest points
         for i, line in enumerate(summary_lines):
@@ -114,7 +131,6 @@ class ChatBot(HuggingFaceClient):
 
         # Append observation and instructions
         prompt += f"""
-
 **Observation**
 - {data.trend}
 
@@ -158,31 +174,27 @@ Your response should be coherent, factual, and easy to understand.
 
 if __name__ == "__main__":
     from app.defaults import AppDefaults
-    from ilostat.ilostat import ILOStat
-
-    # Get the initial settings
-    initial = AppDefaults()
-
-    # Initialize the ILOStat client
-    ilostat = ILOStat("en")
-
-    # Get the area label
-    area_label = ilostat.get_area_label(initial.area)
-
-    # Get the dataflow label
-    data_label = ilostat.get_dataflow_label(initial.dataflow)
+    from textwrap import fill, wrap
 
     # Set a default model for the chatbot
-    model = "meta-llama/Meta-Llama-3-8B-Instruct"
+    model = "meta-llama/Llama-3.3-70B-Instruct"
 
     # Instantiate the chatbot
     chatbot = ChatBot(model)
 
+    # Get the initial settings
+    initial = AppDefaults()
+
+    # Get the area, dataflow, and dataframe
+    area_label = initial.area_label
+    dataflow_label = initial.dataflow_label
+    dataframe = initial.dataframe
+
     # Create a data descriptor
-    descriptor = DataDescriptor(initial.dataframe)
+    descriptor = DataDescriptor(dataframe)
 
     # Print the prompt
-    prompt = chatbot.prompt(initial.dataframe, area_label, data_label)
+    prompt = chatbot.prompt(dataframe, area_label, dataflow_label)
 
     # Gather the response
     response_paragraph = []
@@ -192,6 +204,25 @@ if __name__ == "__main__":
         # Append only the new, non-repeated portion
         response_paragraph.append(response)
 
-        # Join fragments into a single paragraph and print
-    print("".join(response_paragraph).strip())
-    print("-" * 50)
+    # Join fragments into a single paragraph
+    response_paragraph = "".join(response_paragraph).strip()
+
+    # Wrap the paragraph to a specific width
+    response_paragraph = fill(response_paragraph, width=80)
+
+    # Now let's format the prompt
+    wrapped_prompt = []
+    for line in prompt.splitlines():
+        # Wrap only if the line is not empty
+        if line.strip():
+            wrapped_prompt.extend(wrap(line, width=80))
+        else:
+            wrapped_prompt.append("")
+    wrapped_prompt = "\n".join(wrapped_prompt)
+
+    # Print the formatted prompt and response
+    print("\n")
+    print("-" * 36, "PROMPT", "-" * 36)
+    print(wrapped_prompt, "\n")
+    print("-" * 36, "RESPONSE", "-" * 36)
+    print(response_paragraph, "\n")

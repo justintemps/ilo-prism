@@ -31,11 +31,17 @@ class AppDefaults:
         # Private attribute for the area
         self._area = area
 
+        # Private attribute for the area label
+        self._area_label = ilostat.get_area_label(area)
+
         # Fetch the full list of areas
         self._areas = ilostat.get_areas()
 
         # Dataflow for the specified area
         self._dataflow = dataflow
+
+        # Fetch the dataflow label
+        self._dataflow_label = ilostat.get_dataflow_label(dataflow)
 
         # Fetch dataflows associated with the specified area
         self._dataflows = ilostat.get_dataflows(area)
@@ -65,6 +71,16 @@ class AppDefaults:
         return self._area
 
     @property
+    def area_label(self):
+        """
+        Returns the area label for the specified area.
+
+        Returns:
+            str: The area label.
+        """
+        return self._area_label
+
+    @property
     def areas(self):
         """
         Returns the area associated with the current settings.
@@ -83,6 +99,16 @@ class AppDefaults:
             str: The dataflow value.
         """
         return self._dataflow
+
+    @property
+    def dataflow_label(self):
+        """
+        Returns the dataflow label for the specified area.
+
+        Returns:
+            str: The dataflow label.
+        """
+        return self._dataflow_label
 
     @property
     def dataflows(self):
