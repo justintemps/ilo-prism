@@ -144,7 +144,7 @@ Your response should be coherent, factual, and easy to understand.
 
         return prompt
 
-    def respond(self, prompt: str):
+    def respond(self, prompt: str, yield_tokens: bool = False):
         # Initialize the messages with the first system message
         messages = [{"role": "system", "content": "You are a helpful chatbot"}]
 
@@ -168,8 +168,10 @@ Your response should be coherent, factual, and easy to understand.
             # The response from the current token
             response += token
 
-            # Yield the next part of the response
-            yield token
+            if not yield_tokens:
+                yield response
+            else:
+                yield token
 
 
 if __name__ == "__main__":
@@ -200,7 +202,7 @@ if __name__ == "__main__":
     response_paragraph = []
 
     # Generate a response
-    for response in chatbot.respond(prompt):
+    for response in chatbot.respond(prompt, yield_tokens=True):
         # Append only the new, non-repeated portion
         response_paragraph.append(response)
 
