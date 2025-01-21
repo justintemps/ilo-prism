@@ -4,11 +4,31 @@ A proof of concept for summarizing data from the [ILOSTAT SDMX API](https://ilos
 
 ## Usage
 
-### Install dependencies
+Before following either of the steps below, you'll need to get a token from [Hugging Face](https://huggingface.co/).
+
+### Docker Image
+
+The easiest way to run the app locally is to pull the Docker image from the container registry.
+
+```
+docker pull ghcr.io/justintemps/ilostat-simple-summarizer/ilostat-simple-summarizer:latest
+```
+
+You can then run the container like this:
+
+```
+docker run -p 7860:7860 --env HUGGING_FACE_TOKEN=yourhuggingfacetoken ghcr.io/justintemps/ilostat-simple-summarizer/ilostat-simple-summarizer:latest
+```
+
+The application should be available at http://127.0.0.1:7860
+
+### From source code
+
+#### Install dependencies
 
 `pip install -r requirements.txt`
 
-### Add .env file
+#### Add .env file
 
 Create an `.env` file in the project root with your personal Hugging Face token.
 
@@ -16,7 +36,7 @@ Create an `.env` file in the project root with your personal Hugging Face token.
 HUGGING_FACE_TOKEN=yourhuggingfacetoken
 ```
 
-### Start application
+#### Start application
 
 `python3 main.py`
 
