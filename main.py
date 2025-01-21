@@ -224,6 +224,9 @@ with gr.Blocks(fill_height=True) as demo:
                     - A similar approach could be combined with a Retrieval Augmented Generation (RAG) system to generate static pages for the ILO's website ilo.org
                     - The same thing could be used to build a chatbot providing an open interface for the ILO's knowledge base, with full access to its statistical resources.
 
+                    ## Where's the code?
+                    The code for this app is available on [GitHub](https://github.com/justintemps/ilo-prism)
+
                     ### Who made this
                     This app was created by [Justin Smith](mailto:smithj@ilo.org), Senior Digital Communication Officer with the ILO Department of Communication and Public Information. It uses the [Gradio](https://gradio.app/) library for building interactive machine learning applications.
 
