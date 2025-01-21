@@ -8,6 +8,14 @@ A proof of concept for summarizing data from the [ILOSTAT SDMX API](https://ilos
 
 `pip install -r requirements.txt`
 
+### Add .env file
+
+Create an `.env` file in the project root with your personal Hugging Face token.
+
+```
+HUGGING_FACE_TOKEN=yourhuggingfacetoken
+```
+
 ### Start application
 
 `python3 main.py`
