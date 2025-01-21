@@ -228,10 +228,10 @@ with gr.Blocks(fill_height=True) as demo:
                     The code for this app is available on [GitHub](https://github.com/justintemps/ilo-prism)
 
                     ### Who made this
-                    This app was created by [Justin Smith](mailto:smithj@ilo.org), Senior Digital Communication Officer with the ILO Department of Communication and Public Information. It uses the [Gradio](https://gradio.app/) library for building interactive machine learning applications.
+                    This app was created by [Justin Smith](https://github.com/justintemps), Senior Digital Communication Officer with the ILO Department of Communication and Public Information. It uses the [Gradio](https://gradio.app/) library for building interactive machine learning applications.
 
                     ### Acknowledgements
-                    Many thanks to the ILOSTAT team, especially [Weichen Lee](mailto:lei@ilo.org), for his support using the ILO SDMX API.
+                    Many thanks to the ILOSTAT team, especially [Weichen Lee](https://github.com/wc-lei), for his support using the ILO SDMX API.
                     """
                 )
 
