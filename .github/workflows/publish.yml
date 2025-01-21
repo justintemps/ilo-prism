@@ -20,12 +20,25 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Cache the ilo-prism.db artifact do we don't have to fetch it every time
+      - name: Cache store/ilo-prism.db
+        uses: actions/cache@v3
+        with:
+          path: store/ilo-prism.db
+          key: ${{ runner.os }}-ilo-prism-db-${{ github.ref_name }}-${{ github.event.workflow }}-$(date +%Y-%m-%d)
+          restore-keys: |
+            ${{ runner.os }}-ilo-prism-db-${{ github.ref_name }}-${{ github.event.workflow }}-
+
       # Install dependencies and run the Python module
       - name: Install dependencies and run ilostat module
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          python -m ilostat.ilostat
+          if [ ! -f store/ilo-prism.db ]; then
+            python -m ilostat.ilostat
+          else
+            echo "Using cached store/ilo-prism.db"
+          fi
 
       # Log in to GitHub Container Registry
       - name: Log in to GitHub Container Registry
