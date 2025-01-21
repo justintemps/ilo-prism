@@ -22,6 +22,10 @@ HUGGING_FACE_TOKEN=yourhuggingfacetoken
 
 The first time you run this command, the app will cache certain metadata from the ILOSTAT SDMX API. This may take a while.
 
+After that, the application should start on local url http://127.0.0.1:7860
+
+![A screenshot of the ILOSTAT Simple Summarizer](./screenshot.png)
+
 ## How it works
 
 1. Select a geographic region and an indicator from ILOSTAT.
