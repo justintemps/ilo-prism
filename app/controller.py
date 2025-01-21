@@ -1,6 +1,6 @@
 import gradio as gr
 from ilostat.ilostat import ILOStat
-from . import ilostat, CHATBOT_MODEL, SUMMARIZATION_MODEL
+from . import ilostat, CHATBOT_MODEL
 from ._dim_controller import DimensionController
 from predict.chat import ChatBot
 import pandas as pd

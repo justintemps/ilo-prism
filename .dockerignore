@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+.git
+http_cache.sqlite
+.python-version
+.DS_store
