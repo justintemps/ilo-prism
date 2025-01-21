@@ -100,6 +100,17 @@ class DataDescriptor:
 
         return summary
 
+    @property
+    def dimensions(self):
+        dimensions = []
+        excluded_columns = {"Reference Area", "TIME_PERIOD", "value"}
+        for column in self._df.columns:
+            if column not in excluded_columns:
+                unique_values = self._df[column].unique()
+                for value in unique_values:
+                    dimensions.append((column, value))
+        return dimensions
+
 
 if __name__ == "__main__":
     from app.defaults import AppDefaults
@@ -108,4 +119,4 @@ if __name__ == "__main__":
 
     data = DataDescriptor(df=initial.dataframe)
 
-    print(data.milestones)
+    print(data.dimensions)

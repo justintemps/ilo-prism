@@ -60,6 +60,7 @@ class ChatBot(HuggingFaceClient):
         return "\n".join([start] + summary_lines + [end])
 
     def print_projections(self, data: DataDescriptor) -> str:
+
         projections_df = data.projections
 
         if projections_df.empty:
@@ -98,6 +99,19 @@ class ChatBot(HuggingFaceClient):
 
         return "\n".join(result_lines)
 
+    def print_dimensions(self, data: DataDescriptor) -> str:
+        # Get the dimensions of the data
+        dimensions = data.dimensions
+
+        # Initialize the result string
+        result = ""
+
+        # Add each dimension to the result
+        for dimension, value in dimensions:
+            result += f"- {dimension}: {value}\n"
+
+        return result
+
     def prompt(self, df, area_label: str, data_label: str):
         """
         Generate a prompt for summarizing labour statistics from a dataframe.
@@ -120,17 +134,13 @@ class ChatBot(HuggingFaceClient):
 - Geographic Area: {area_label}
 - Dataset: {data_label}
 - Reference Year: {data.current_year}
-"""
 
-        # Append key metrics
-        prompt += f"""
+**Dimensions**
+{self.print_dimensions(data)}
 **Key Metrics**
 {self.print_metrics(data)}
 {self.print_projections(data)}
-"""
 
-        # Append observation and instructions
-        prompt += f"""
 **Observation**
 - {data.trend}
 
