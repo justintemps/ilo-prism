@@ -95,35 +95,6 @@ class AppController:
             current_dimensions[key] = val
         return current_dimensions
 
-    def set_dataflow_label(self, area: str, dataflow: str):
-        """
-        Generate a formatted label for the selected area and dataflow.
-
-        Parameters:
-        - area (str): The selected geographic area.
-        - dataflow (str): The selected dataflow.
-
-        Returns:
-        - str: Formatted label for display, or a placeholder if no values are provided.
-        """
-        dataflow_label = ilostat.get_dataflow_label(dataflow)
-        area_label = ilostat.get_area_label(area)
-
-        placeholder = """
-        ## Geographic region
-        ### ILOSTAT Indicator
-        """
-
-        label = f"""
-        ## {area_label}
-        ### {dataflow_label}
-        """
-
-        if area and dataflow:
-            return label
-
-        return placeholder
-
     def set_dataframe(
         self,
         area: str,
@@ -230,3 +201,17 @@ class AppController:
         # Get a response from the chatbot
         for response in self._chatbot.respond(prompt):
             yield response
+
+
+if __name__ == "__main__":
+    from app.defaults import AppDefaults
+
+    initial = AppDefaults()
+
+    controller = AppController()
+
+    initial_dimensions = controller.set_dimensions(initial.area, initial.dataflow)
+
+    current_dimensions = controller.init_current_dimensions(initial.dimensions)
+
+    print(initial_dimensions)

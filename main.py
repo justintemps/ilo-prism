@@ -15,7 +15,11 @@ initial = AppDefaults()
 # ===========================
 
 # UI components
-title = gr.Markdown("# Summarize a table from ILOSTAT")
+title = gr.Markdown("# <center>🤖 ILOSTAT Simple Summarizer</center>")
+
+subtitle = gr.Markdown(
+    "## <center>A proof of concept for summarizing ILOSTAT data using chat completion models</center>"
+)
 
 # Dropdown for geographic regions with dynamic choices
 areas_dropdown = gr.Dropdown(
@@ -29,8 +33,6 @@ dataflows_dropdown = gr.Dropdown(
     value=initial.dataflow,
 )
 
-# Label for the selected dataflow
-dataflow_label = gr.Markdown("")
 
 # Description of the selected dataflow from ILOSTAT
 dataflow_description = gr.HTML("Description goes here")
@@ -42,13 +44,13 @@ output_dataframe = gr.DataFrame(value=initial.dataframe)
 get_data_button = gr.Button("Update data")
 
 # Button to generate chat completion
-get_chat_completion_button = gr.Button("Start chat completion")
+get_chat_completion_button = gr.Button("Generate summary")
 
 # Output textarea for chat completion
-chat_completion_textarea = gr.TextArea(label="Click button to start chat completion")
+chat_completion_textarea = gr.TextArea()
 
 # Ouput textarea for the prompt
-prompt_textarea = gr.TextArea(label="The prompt for the model")
+prompt_markdown = gr.Markdown(label="The prompt for the model")
 
 
 with gr.Blocks(fill_height=True) as demo:
@@ -74,6 +76,8 @@ with gr.Blocks(fill_height=True) as demo:
     # ===========================
 
     title.render()
+    subtitle.render()
+    gr.Markdown("---")
 
     # Layout using rows and columns for the UI components
     with gr.Row():
@@ -81,7 +85,7 @@ with gr.Blocks(fill_height=True) as demo:
         # Left column for inputs
         with gr.Column():
 
-            gr.Markdown("## 🌍 Select a region and dataflow")
+            gr.Markdown("### 🌍 Select a region and dataflow")
 
             # Render dropdown for area selection
             with gr.Row():
@@ -97,7 +101,7 @@ with gr.Blocks(fill_height=True) as demo:
 
                 if dims:
 
-                    gr.Markdown("## 🔦 Filter the data")
+                    gr.Markdown("### 🔦 Filter the data")
 
                     with gr.Group():
 
@@ -167,9 +171,6 @@ with gr.Blocks(fill_height=True) as demo:
 
         # Right column for outputs
         with gr.Column(scale=2):
-
-            dataflow_label.render()
-
             with gr.Tab("🔢 Data"):
                 output_dataframe.render()
 
@@ -187,11 +188,49 @@ with gr.Blocks(fill_height=True) as demo:
                 dataflow_description.render()
 
             with gr.Tab("✍️ Prompt"):
-                prompt_textarea.render()
+                prompt_markdown.render()
 
-            with gr.Tab("✨ Chat completion", interactive=True):
+            with gr.Tab("✨ AI Summary", interactive=True):
                 chat_completion_textarea.render()
                 get_chat_completion_button.render()
+
+            with gr.Tab("💁 What's going on?"):
+                gr.Markdown(
+                    """
+                    ## What is this?
+                    This is a proof of concept for summarizing data from the [ILOSTAT SDMX API](https://ilostat.ilo.org/resources/sdmx-tools/) using a chat completion model.
+
+                    ### How it works
+                    1. Select a geographic region and an indicator from ILOSTAT.
+                    2. Filter the data by selecting dimensions.
+                    3. Click the "Update data" button to generate a prompt.
+                    4. See the chart for a visual representation of the data.
+                    5. Go to the "Prompt" tab to see the generated prompt.
+                    6. Go to the "AI Summary" tab and click the "Generate summary" button to generate a summary using a chat completion model.
+
+                    ### What problem does it solve?
+                    Current large language models (LLMs) struggle with summarising tabular data. They're trained entirely on unstructured text and have no framework for understanding two-dimensional data structures like tables. They also lack the numerical reasoning skills that are needed to understand the relationships between numbers in a table, from the values themselves to the time periods they represent. This app proposes a solution to this problem by distilling key insights from tabular data into a prompt that can be used to generate a summary using a chat completion model.
+
+                    ### What model is it using?
+                    This app will work with any chat completion model that can generate text based on a prompt. [Llama-3.3-70B-Instruct](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct) was tested with good results. More testing is needed to determine if the app works as well with smaller models that can be hosted on a server.
+
+                    ### Why is this useful?
+                    Text descriptions like the ones generated here can be used to generate accessible summaries of data for people with seeing disabilities or limited access to visual content. Together with contextual information from news stories or reports, they can also be used to generate data-driven narratives that help people understand complex world of work issues.
+
+                    ### What this isn't
+                    A production-ready application. This is a proof of concept that demonstrates how chat completion models can be used to summarize data from ILOSTAT. It is not intended for use in production environments.
+
+                    ### What's next?
+                    - A similar approach could be combined with a Retrieval Augmented Generation (RAG) system to generate static pages for the ILO's website ilo.org
+                    - The same thing could be used to build a chatbot providing an open interface for the ILO's knowledge base, with full access to its statistical resources.
+
+                    ### Who made this
+                    This app was created by [Justin Smith](mailto:smithj@ilo.org), Senior Digital Communication Officer with the ILO Department of Communication and Public Information. It uses the [Gradio](https://gradio.app/) library for building interactive machine learning applications.
+
+                    ### Acknowledgements
+                    Many thanks to the ILOSTAT team, especially [Weichen Lee](mailto:lei@ilo.org), for his support using the ILO SDMX API.
+                    """
+                )
 
     # ===========================
     # Component Event Handlers
@@ -223,13 +262,6 @@ with gr.Blocks(fill_height=True) as demo:
         outputs=output_dataframe,
     )
 
-    # Update the dataflow label but only when the dataframe is updated
-    output_dataframe.change(
-        control.set_dataflow_label,
-        inputs=[areas_dropdown, dataflows_dropdown],
-        outputs=dataflow_label,
-    )
-
     # Update the dataflow description but only when the dataframe is updated
     output_dataframe.change(
         control.set_description,
@@ -245,13 +277,13 @@ with gr.Blocks(fill_height=True) as demo:
             dataflows_dropdown,
             output_dataframe,
         ],
-        outputs=prompt_textarea,
+        outputs=prompt_markdown,
     )
 
     # Event to handle chat completion button click, processing the output dataframe and outputting summary
     get_chat_completion_button.click(
         fn=control.chat_completion,
-        inputs=prompt_textarea,
+        inputs=prompt_markdown,
         outputs=chat_completion_textarea,
     )
 

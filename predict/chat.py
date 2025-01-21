@@ -16,8 +16,8 @@ class ChatBot(HuggingFaceClient):
         df = data.milestones
 
         # Find start and end points
-        start = f"Start: {data.start.time} = {data.start.value}"
-        end = f"End: {data.end.time} = {data.end.value}"
+        start = f"- Start: {data.start.time} = {data.start.value}"
+        end = f"- End: {data.end.time} = {data.end.value}"
 
         # Track inflection points (increases and decreases)
         summary_lines = []
@@ -34,15 +34,15 @@ class ChatBot(HuggingFaceClient):
             magnitude = ""
 
             if standardized_change > 3:
-                magnitude = "Dramatic"
+                magnitude = "- Dramatic"
             elif 2 < standardized_change <= 3:
-                magnitude = "Substantial"
+                magnitude = "- Substantial"
             elif 1 < standardized_change <= 2:
-                magnitude = "Moderate"
+                magnitude = "- Moderate"
             elif 0.5 < standardized_change <= 1:
-                magnitude = "Modest"
+                magnitude = "- Modest"
             else:
-                magnitude = "Slight"
+                magnitude = "- Slight"
 
             if current_value > previous_value:
                 summary_lines.append(f"{magnitude} increase: {year} = {current_value}")
