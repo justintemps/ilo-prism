@@ -230,9 +230,3 @@ if __name__ == "__main__":
     # Example usage of the ILOStat class
     ilostat = ILOStat("en")
     country = "FRA"
-
-    dataflows = ilostat.get_dataflows(country)
-    label = ilostat.get_area_label(country)
-
-    print(label)
-    print(dataflows)
