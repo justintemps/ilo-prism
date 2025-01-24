@@ -20,12 +20,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Cache the ilo-prism.db artifact do we don't have to fetch it every time
+      # Cache the ilo-prism.db artifact so we don't have to fetch it every time
       - name: Cache store/ilo-prism.db
         uses: actions/cache@v3
         with:
           path: store/ilo-prism.db
-          key: ${{ runner.os }}-ilo-prism-db-${{ github.ref_name }}-${{ github.event.workflow }}-$(date +%Y-%m-%d)
+          key: ${{ runner.os }}-ilo-prism-db-${{ github.ref_name }}-${{ github.event.workflow }}-$(date +%Y-%m)
           restore-keys: |
             ${{ runner.os }}-ilo-prism-db-${{ github.ref_name }}-${{ github.event.workflow }}-
 
