@@ -20,14 +20,19 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Add a step to get the data for the cache key
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "date=$(/bin/date -u "+%Y%m")" >> $GITHUB_OUTPUT
+        shell: bash
+
       # Cache the ilo-prism.db artifact so we don't have to fetch it every time
       - name: Cache store/ilo-prism.db
         uses: actions/cache@v3
         with:
           path: store/ilo-prism.db
-          key: ${{ runner.os }}-ilo-prism-db-${{ github.ref_name }}-${{ github.event.workflow }}-$(date +%Y-%m)
-          restore-keys: |
-            ${{ runner.os }}-ilo-prism-db-${{ github.ref_name }}-${{ github.event.workflow }}-
+          key: ${{ runner.os }}-ilo-prism-db-${{ github.ref_name }}-${{ steps.get-date.outputs.date }}
 
       # Install dependencies and run the Python module
       - name: Install dependencies and run ilostat module
