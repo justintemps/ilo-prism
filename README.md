@@ -1,6 +1,8 @@
 # ILOSTAT Simple Summarizer
 
-A proof of concept for summarizing data from the [ILOSTAT SDMX API](https://ilostat.ilo.org/resources/sdmx-tools/) using a chat completion model.
+A proof of concept for creating natural language descriptions of data returned by the [ILOSTAT SDMX API](https://ilostat.ilo.org/resources/sdmx-tools/) using a chat completion model.
+
+![A screenshot of the ILOSTAT Simple Summarizer](./screenshot-1.png)
 
 ## Usage
 
@@ -44,8 +46,6 @@ The first time you run this command, the app will cache certain metadata from th
 
 After that, the application should start on local url http://127.0.0.1:7860
 
-![A screenshot of the ILOSTAT Simple Summarizer](./screenshot.png)
-
 ## How it works
 
 1. Select a geographic region and an indicator from ILOSTAT.
@@ -59,9 +59,11 @@ After that, the application should start on local url http://127.0.0.1:7860
 
 Current large language models (LLMs) struggle with summarising tabular data. They're trained entirely on unstructured text and have no framework for understanding two-dimensional data structures like tables. They also lack the numerical reasoning skills that are needed to understand the relationships between numbers in a table, from the values themselves to the time periods they represent. This app proposes a solution to this problem by distilling key insights from tabular data into a prompt that can be used to generate a summary using a chat completion model.
 
-## What model is it using?
+## What model(s) is it using?
 
-This app will work with any chat completion model that can generate text based on a prompt. [Llama-3.3-70B-Instruct](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct) was tested with good results. More testing is needed to determine if the app works as well with smaller models that can be hosted on a server.
+- [facebook/bart-large-cnn](https://huggingface.co/facebook/bart-large-cnn) is used to summarise metadata about detaflows
+
+- [Llama-3.3-70B-Instruct](https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct) is used by default to generate the data descriptions. In future versions, this could be paramtized to experiment with different chat completion models.
 
 ## Why is this useful?
 
