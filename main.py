@@ -174,6 +174,10 @@ with gr.Blocks(fill_height=True) as demo:
             with gr.Tab("🔢 Data"):
                 output_dataframe.render()
 
+            with gr.Tab("✨ AI Summary", interactive=True):
+                chat_completion_textarea.render()
+                get_chat_completion_button.render()
+
             with gr.Tab("📊 Chart"):
                 output_chart = gr.Plot()
 
@@ -189,10 +193,6 @@ with gr.Blocks(fill_height=True) as demo:
 
             with gr.Tab("✍️ Prompt"):
                 prompt_markdown.render()
-
-            with gr.Tab("✨ AI Summary", interactive=True):
-                chat_completion_textarea.render()
-                get_chat_completion_button.render()
 
             with gr.Tab("💁 What's going on?"):
                 gr.Markdown(
