@@ -1,6 +1,7 @@
 import pandas as pd
 from ._client import HuggingFaceClient
 from ._descriptor import DataDescriptor
+from ._summarizer import MetadataSummarizer
 import numpy as np
 
 
@@ -10,7 +11,7 @@ class ChatBot(HuggingFaceClient):
 
         self.MAX_TOKENS = 1000
 
-        self.TEMPERATURE = 0.7
+        self.TEMPERATURE = 0.3
 
     def print_metrics(self, data: DataDescriptor) -> str:
         df = data.milestones
@@ -112,7 +113,12 @@ class ChatBot(HuggingFaceClient):
 
         return result
 
-    def prompt(self, df, area_label: str, data_label: str):
+    def summarize_metadata(self, dataflow: str) -> str:
+        summarizer = MetadataSummarizer(dataflow)
+
+        return summarizer.respond()
+
+    def prompt(self, df, area_label: str, data_label: str, dataflow: str):
         """
         Generate a prompt for summarizing labour statistics from a dataframe.
 
@@ -144,9 +150,13 @@ class ChatBot(HuggingFaceClient):
 **Observation**
 - {data.trend}
 
+**About the data**
+- {self.summarize_metadata(dataflow)}
+
 **Instructions**
 1. Summarize the general trend of the data in a single paragraph of four or five sentences.
 2. Focus on overall patterns, key increases or decreases, peaks, and minimums.
+4. Include information provided about the data so that the reader can understand the context.
 3. Use clear and concise language suitable for a general audience.
 
 Your response should be coherent, factual, and easy to understand.
@@ -201,12 +211,15 @@ if __name__ == "__main__":
     area_label = initial.area_label
     dataflow_label = initial.dataflow_label
     dataframe = initial.dataframe
-
-    # Create a data descriptor
-    descriptor = DataDescriptor(dataframe)
+    dataflow = initial.dataflow
 
     # Print the prompt
-    prompt = chatbot.prompt(dataframe, area_label, dataflow_label)
+    prompt = chatbot.prompt(
+        dataflow=dataflow,
+        df=dataframe,
+        area_label=area_label,
+        data_label=dataflow_label,
+    )
 
     # Gather the response
     response_paragraph = []

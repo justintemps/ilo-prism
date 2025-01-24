@@ -193,7 +193,7 @@ class AppController:
         area_label = ilostat.get_area_label(area)
 
         # Get a response from the chatbot
-        prompt = self._chatbot.prompt(df, area_label, data_label)
+        prompt = self._chatbot.prompt(df, area_label, data_label, dataflow)
 
         return prompt
 
