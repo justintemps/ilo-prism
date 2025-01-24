@@ -2,7 +2,7 @@
 
 A proof of concept for creating natural language descriptions of data returned by the [ILOSTAT SDMX API](https://ilostat.ilo.org/resources/sdmx-tools/) using a chat completion model.
 
-![A screenshot of the ILOSTAT Simple Summarizer](./screenshot-1.png)
+![A screenshot of the ILOSTAT Simple Summarizer](./screenshot.png)
 
 ## Usage
 
